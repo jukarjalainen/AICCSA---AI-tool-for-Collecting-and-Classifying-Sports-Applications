@@ -1,0 +1,568 @@
+[2025-08-12T08:52:09.816Z] 🚀 Starting comprehensive App Store SPORTS app mapping...
+[2025-08-12T08:52:09.817Z] 🍎 Target: Apple App Store apps in SPORTS category only
+[2025-08-12T08:52:09.818Z] ⏰ Started at: 2025-08-12T08:52:09.816Z
+[2025-08-12T08:52:09.818Z] 🍎 Starting comprehensive App Store SPORTS app collection...
+[2025-08-12T08:52:09.818Z] 🌍 Searching across 1 countries: US
+[2025-08-12T08:52:09.819Z] 
+⏱️  TIME ESTIMATION:
+[2025-08-12T08:52:09.819Z]    📋 Collection calls: 13 (1 countries × 13 collections)
+[2025-08-12T08:52:09.819Z]    🔍 Search calls: 121 (1 countries × 121 search terms)
+[2025-08-12T08:52:09.819Z]    🎯 Total API calls: 134
+[2025-08-12T08:52:09.819Z]    ⌛ Estimated time: ~ 0 hours 7 minutes (402 seconds)
+[2025-08-12T08:52:09.820Z]    🚀 Starting collection process...
+
+[2025-08-12T08:52:09.820Z] 
+🌍 Processing country: US
+[2025-08-12T08:52:09.821Z] 
+📱 Processing SPORTS category in US...
+[2025-08-12T08:52:09.821Z]   📋 Fetching from TOP_MAC in US...
+[2025-08-12T08:52:10.313Z]   📋 Fetching from TOP_FREE_MAC in US...
+[2025-08-12T08:52:12.365Z]     ✅ Added 100 new apps from TOP_FREE_MAC in US
+[2025-08-12T08:52:13.373Z]   📋 Fetching from TOP_GROSSING_MAC in US...
+[2025-08-12T08:52:14.672Z]     ✅ Added 84 new apps from TOP_GROSSING_MAC in US
+[2025-08-12T08:52:15.678Z]   📋 Fetching from TOP_PAID_MAC in US...
+[2025-08-12T08:52:16.836Z]     ✅ Added 100 new apps from TOP_PAID_MAC in US
+[2025-08-12T08:52:17.846Z]   📋 Fetching from NEW_IOS in US...
+[2025-08-12T08:52:18.601Z]     ✅ Added 100 new apps from NEW_IOS in US
+[2025-08-12T08:52:19.606Z]   📋 Fetching from NEW_FREE_IOS in US...
+[2025-08-12T08:52:20.175Z]     ✅ Added 11 new apps from NEW_FREE_IOS in US
+[2025-08-12T08:52:21.184Z]   📋 Fetching from NEW_PAID_IOS in US...
+[2025-08-12T08:52:22.287Z]     ✅ Added 99 new apps from NEW_PAID_IOS in US
+[2025-08-12T08:52:23.295Z]   📋 Fetching from TOP_FREE_IOS in US...
+[2025-08-12T08:52:24.908Z]     ✅ Added 55 new apps from TOP_FREE_IOS in US
+[2025-08-12T08:52:25.911Z]   📋 Fetching from TOP_FREE_IPAD in US...
+[2025-08-12T08:52:27.477Z]     ✅ Added 30 new apps from TOP_FREE_IPAD in US
+[2025-08-12T08:52:28.489Z]   📋 Fetching from TOP_GROSSING_IOS in US...
+[2025-08-12T08:52:30.295Z]     ✅ Added 0 new apps from TOP_GROSSING_IOS in US
+[2025-08-12T08:52:31.305Z]   📋 Fetching from TOP_GROSSING_IPAD in US...
+[2025-08-12T08:52:32.567Z]     ✅ Added 26 new apps from TOP_GROSSING_IPAD in US
+[2025-08-12T08:52:33.571Z]   📋 Fetching from TOP_PAID_IOS in US...
+[2025-08-12T08:52:34.777Z]     ✅ Added 0 new apps from TOP_PAID_IOS in US
+[2025-08-12T08:52:35.786Z]   📋 Fetching from TOP_PAID_IPAD in US...
+[2025-08-12T08:52:37.413Z]     ✅ Added 64 new apps from TOP_PAID_IPAD in US
+[2025-08-12T08:52:38.422Z]   🔍 Searching with SPORTS specific terms in US...
+[2025-08-12T08:52:38.423Z]     Searching: "football" in US
+[2025-08-12T08:52:44.762Z]       ✅ Added 210 new apps from "football" in US
+[2025-08-12T08:52:45.570Z]     Searching: "soccer" in US
+[2025-08-12T08:52:50.984Z]       ✅ Added 105 new apps from "soccer" in US
+[2025-08-12T08:52:51.791Z]     Searching: "futbol" in US
+[2025-08-12T08:52:58.667Z]       ✅ Added 95 new apps from "futbol" in US
+[2025-08-12T08:52:59.470Z]     Searching: "american football" in US
+[2025-08-12T08:53:04.984Z]       ✅ Added 72 new apps from "american football" in US
+[2025-08-12T08:53:05.798Z]     Searching: "flag football" in US
+[2025-08-12T08:53:13.881Z]       ✅ Added 65 new apps from "flag football" in US
+[2025-08-12T08:53:14.694Z]     Searching: "australian football" in US
+[2025-08-12T08:53:19.190Z]       ✅ Added 110 new apps from "australian football" in US
+[2025-08-12T08:53:19.994Z]     Searching: "gaelic football" in US
+[2025-08-12T08:53:25.879Z]       ✅ Added 145 new apps from "gaelic football" in US
+[2025-08-12T08:53:26.693Z]     Searching: "basketball" in US
+[2025-08-12T08:53:31.104Z]       ✅ Added 198 new apps from "basketball" in US
+[2025-08-12T08:53:31.918Z]     Searching: "3x3 basketball" in US
+[2025-08-12T08:53:35.810Z]       ✅ Added 69 new apps from "3x3 basketball" in US
+[2025-08-12T08:53:36.620Z]     Searching: "streetball" in US
+[2025-08-12T08:53:42.436Z]       ✅ Added 118 new apps from "streetball" in US
+[2025-08-12T08:53:43.244Z]     Searching: "baseball" in US
+[2025-08-12T08:53:47.116Z]       ✅ Added 109 new apps from "baseball" in US
+[2025-08-12T08:53:47.932Z]     Searching: "softball" in US
+[2025-08-12T08:53:54.044Z]       ✅ Added 152 new apps from "softball" in US
+[2025-08-12T08:53:54.850Z]     Searching: "fastpitch" in US
+[2025-08-12T08:53:58.732Z]       ✅ Added 89 new apps from "fastpitch" in US
+[2025-08-12T08:53:59.543Z]     Searching: "tennis" in US
+[2025-08-12T08:54:03.743Z]       ✅ Added 187 new apps from "tennis" in US
+[2025-08-12T08:54:04.559Z]     Searching: "padel" in US
+[2025-08-12T08:54:09.396Z]       ✅ Added 202 new apps from "padel" in US
+[2025-08-12T08:54:10.206Z]     Searching: "beach tennis" in US
+[2025-08-12T08:54:15.569Z]       ✅ Added 73 new apps from "beach tennis" in US
+[2025-08-12T08:54:16.375Z]     Searching: "paddle tennis" in US
+[2025-08-12T08:54:20.161Z]       ✅ Added 52 new apps from "paddle tennis" in US
+[2025-08-12T08:54:20.961Z]     Searching: "golf" in US
+[2025-08-12T08:54:25.587Z]       ✅ Added 205 new apps from "golf" in US
+[2025-08-12T08:54:26.394Z]     Searching: "disc golf" in US
+[2025-08-12T08:54:30.238Z]       ✅ Added 168 new apps from "disc golf" in US
+[2025-08-12T08:54:31.042Z]     Searching: "mini golf" in US
+[2025-08-12T08:54:34.573Z]       ✅ Added 128 new apps from "mini golf" in US
+[2025-08-12T08:54:35.375Z]     Searching: "putting" in US
+[2025-08-12T08:54:37.530Z]       ✅ Added 84 new apps from "putting" in US
+[2025-08-12T08:54:38.340Z]     Searching: "golf swing" in US
+[2025-08-12T08:54:42.412Z]       ✅ Added 127 new apps from "golf swing" in US
+[2025-08-12T08:54:43.222Z]     Searching: "running" in US
+[2025-08-12T08:54:47.401Z]       ✅ Added 201 new apps from "running" in US
+[2025-08-12T08:54:48.216Z]     Searching: "trail running" in US
+[2025-08-12T08:54:52.579Z]       ✅ Added 103 new apps from "trail running" in US
+[2025-08-12T08:54:53.380Z]     Searching: "jogging" in US
+[2025-08-12T08:54:59.136Z]       ✅ Added 55 new apps from "jogging" in US
+[2025-08-12T08:54:59.942Z]     Searching: "sprint" in US
+[2025-08-12T08:55:05.103Z]       ✅ Added 135 new apps from "sprint" in US
+[2025-08-12T08:55:05.914Z]     Searching: "ultra running" in US
+[2025-08-12T08:55:09.853Z]       ✅ Added 40 new apps from "ultra running" in US
+[2025-08-12T08:55:10.654Z]     Searching: "cycling" in US
+[2025-08-12T08:55:15.472Z]       ✅ Added 191 new apps from "cycling" in US
+[2025-08-12T08:55:16.275Z]     Searching: "mountain biking" in US
+[2025-08-12T08:55:22.406Z]       ✅ Added 155 new apps from "mountain biking" in US
+[2025-08-12T08:55:23.218Z]     Searching: "road cycling" in US
+[2025-08-12T08:55:27.296Z]       ✅ Added 64 new apps from "road cycling" in US
+[2025-08-12T08:55:28.105Z]     Searching: "gravel cycling" in US
+[2025-08-12T08:55:32.998Z]       ✅ Added 68 new apps from "gravel cycling" in US
+[2025-08-12T08:55:33.806Z]     Searching: "cyclocross" in US
+[2025-08-12T08:55:38.047Z]       ✅ Added 104 new apps from "cyclocross" in US
+[2025-08-12T08:55:38.851Z]     Searching: "swimming" in US
+[2025-08-12T08:55:42.291Z]       ✅ Added 186 new apps from "swimming" in US
+[2025-08-12T08:55:43.099Z]     Searching: "open water swimming" in US
+[2025-08-12T08:55:47.430Z]       ✅ Added 91 new apps from "open water swimming" in US
+[2025-08-12T08:55:48.243Z]     Searching: "pool swimming" in US
+[2025-08-12T08:55:51.712Z]       ✅ Added 146 new apps from "pool swimming" in US
+[2025-08-12T08:55:52.527Z]     Searching: "swim workout" in US
+[2025-08-12T08:55:57.876Z]       ✅ Added 70 new apps from "swim workout" in US
+[2025-08-12T08:55:58.678Z]     Searching: "volleyball" in US
+[2025-08-12T08:56:02.851Z]       ✅ Added 146 new apps from "volleyball" in US
+[2025-08-12T08:56:03.658Z]     Searching: "beach volleyball" in US
+[2025-08-12T08:56:07.520Z]       ✅ Added 63 new apps from "beach volleyball" in US
+[2025-08-12T08:56:08.323Z]     Searching: "indoor volleyball" in US
+[2025-08-12T08:56:11.814Z]       ✅ Added 24 new apps from "indoor volleyball" in US
+[2025-08-12T08:56:12.622Z]     Searching: "hockey" in US
+[2025-08-12T08:56:16.581Z]       ✅ Added 129 new apps from "hockey" in US
+[2025-08-12T08:56:17.392Z]     Searching: "ice hockey" in US
+[2025-08-12T08:56:20.384Z]       ✅ Added 67 new apps from "ice hockey" in US
+[2025-08-12T08:56:21.191Z]     Searching: "field hockey" in US
+[2025-08-12T08:56:24.105Z]       ✅ Added 90 new apps from "field hockey" in US
+[2025-08-12T08:56:24.910Z]     Searching: "street hockey" in US
+[2025-08-12T08:56:29.690Z]       ✅ Added 23 new apps from "street hockey" in US
+[2025-08-12T08:56:30.498Z]     Searching: "ball hockey" in US
+[2025-08-12T08:56:34.728Z]       ✅ Added 30 new apps from "ball hockey" in US
+[2025-08-12T08:56:35.540Z]     Searching: "floorball" in US
+[2025-08-12T08:56:39.202Z]       ✅ Added 153 new apps from "floorball" in US
+[2025-08-12T08:56:40.004Z]     Searching: "rugby" in US
+[2025-08-12T08:56:43.947Z]       ✅ Added 147 new apps from "rugby" in US
+[2025-08-12T08:56:44.753Z]     Searching: "sevens rugby" in US
+[2025-08-12T08:56:48.681Z]       ✅ Added 17 new apps from "sevens rugby" in US
+[2025-08-12T08:56:49.492Z]     Searching: "cricket" in US
+[2025-08-12T08:56:53.915Z]       ✅ Added 177 new apps from "cricket" in US
+[2025-08-12T08:56:54.719Z]     Searching: "test cricket" in US
+[2025-08-12T08:56:59.082Z]       ✅ Added 54 new apps from "test cricket" in US
+[2025-08-12T08:56:59.883Z]     Searching: "T20" in US
+[2025-08-12T08:57:03.620Z]       ✅ Added 92 new apps from "T20" in US
+[2025-08-12T08:57:04.429Z]     Searching: "ODI" in US
+[2025-08-12T08:57:08.342Z]       ✅ Added 118 new apps from "ODI" in US
+[2025-08-12T08:57:09.150Z]     Searching: "cricket live" in US
+[2025-08-12T08:57:13.058Z]       ✅ Added 65 new apps from "cricket live" in US
+[2025-08-12T08:57:13.866Z]     Searching: "athletics" in US
+[2025-08-12T08:57:18.141Z]       ✅ Added 189 new apps from "athletics" in US
+[2025-08-12T08:57:18.953Z]     Searching: "track and field" in US
+[2025-08-12T08:57:24.289Z]       ✅ Added 112 new apps from "track and field" in US
+[2025-08-12T08:57:25.104Z]     Searching: "marathon" in US
+[2025-08-12T08:57:28.041Z]       ✅ Added 100 new apps from "marathon" in US
+[2025-08-12T08:57:28.856Z]     Searching: "triathlon" in US
+[2025-08-12T08:57:32.510Z]       ✅ Added 114 new apps from "triathlon" in US
+[2025-08-12T08:57:33.311Z]     Searching: "ironman" in US
+[2025-08-12T08:57:37.072Z]       ✅ Added 90 new apps from "ironman" in US
+[2025-08-12T08:57:37.877Z]     Searching: "duathlon" in US
+[2025-08-12T08:57:41.508Z]       ✅ Added 49 new apps from "duathlon" in US
+[2025-08-12T08:57:42.315Z]     Searching: "aquathlon" in US
+[2025-08-12T08:57:46.349Z]       ✅ Added 19 new apps from "aquathlon" in US
+[2025-08-12T08:57:47.158Z]     Searching: "badminton" in US
+[2025-08-12T08:57:50.969Z]       ✅ Added 153 new apps from "badminton" in US
+[2025-08-12T08:57:51.771Z]     Searching: "squash" in US
+[2025-08-12T08:57:52.464Z]       ✅ Added 133 new apps from "squash" in US
+[2025-08-12T08:57:53.268Z]     Searching: "racquetball" in US
+[2025-08-12T08:57:58.310Z]       ✅ Added 111 new apps from "racquetball" in US
+[2025-08-12T08:57:59.121Z]     Searching: "boxing" in US
+[2025-08-12T08:57:59.768Z]       ✅ Added 189 new apps from "boxing" in US
+[2025-08-12T08:58:00.569Z]     Searching: "muay thai" in US
+[2025-08-12T08:58:04.695Z]       ✅ Added 181 new apps from "muay thai" in US
+[2025-08-12T08:58:05.497Z]     Searching: "savate" in US
+[2025-08-12T08:58:05.938Z]       ✅ Added 3 new apps from "savate" in US
+[2025-08-12T08:58:06.748Z]     Searching: "martial arts" in US
+[2025-08-12T08:58:07.341Z]       ✅ Added 135 new apps from "martial arts" in US
+[2025-08-12T08:58:08.153Z]     Searching: "kung fu" in US
+[2025-08-12T08:58:08.699Z]       ✅ Added 115 new apps from "kung fu" in US
+[2025-08-12T08:58:09.505Z]     Searching: "capoeira" in US
+[2025-08-12T08:58:09.936Z]       ✅ Added 63 new apps from "capoeira" in US
+[2025-08-12T08:58:10.739Z]     Searching: "wushu" in US
+[2025-08-12T08:58:16.122Z]       ✅ Added 107 new apps from "wushu" in US
+[2025-08-12T08:58:16.926Z]     Searching: "gymnastics" in US
+[2025-08-12T08:58:17.635Z]       ✅ Added 176 new apps from "gymnastics" in US
+[2025-08-12T08:58:18.438Z]     Searching: "trampoline" in US
+[2025-08-12T08:58:22.187Z]       ✅ Added 157 new apps from "trampoline" in US
+[2025-08-12T08:58:22.992Z]     Searching: "skiing" in US
+[2025-08-12T08:58:23.536Z]       ✅ Added 178 new apps from "skiing" in US
+[2025-08-12T08:58:24.344Z]     Searching: "cross-country skiing" in US
+[2025-08-12T08:58:28.465Z]       ✅ Added 70 new apps from "cross-country skiing" in US
+[2025-08-12T08:58:29.270Z]     Searching: "snowboarding" in US
+[2025-08-12T08:58:29.855Z]       ✅ Added 92 new apps from "snowboarding" in US
+[2025-08-12T08:58:30.668Z]     Searching: "surfing" in US
+[2025-08-12T08:58:31.236Z]       ✅ Added 130 new apps from "surfing" in US
+[2025-08-12T08:58:32.044Z]     Searching: "bodyboarding" in US
+[2025-08-12T08:58:35.609Z]       ✅ Added 115 new apps from "bodyboarding" in US
+[2025-08-12T08:58:36.413Z]     Searching: "wake surfing" in US
+[2025-08-12T08:58:40.867Z]       ✅ Added 71 new apps from "wake surfing" in US
+[2025-08-12T08:58:41.681Z]     Searching: "windsurfing" in US
+[2025-08-12T08:58:42.291Z]       ✅ Added 160 new apps from "windsurfing" in US
+[2025-08-12T08:58:43.107Z]     Searching: "kitesurfing" in US
+[2025-08-12T08:58:43.684Z]       ✅ Added 91 new apps from "kitesurfing" in US
+[2025-08-12T08:58:44.496Z]     Searching: "skateboarding" in US
+[2025-08-12T08:58:45.027Z]       ✅ Added 95 new apps from "skateboarding" in US
+[2025-08-12T08:58:45.833Z]     Searching: "longboarding" in US
+[2025-08-12T08:58:51.027Z]       ✅ Added 30 new apps from "longboarding" in US
+[2025-08-12T08:58:51.842Z]     Searching: "skateboard tricks" in US
+[2025-08-12T08:58:54.519Z]       ✅ Added 19 new apps from "skateboard tricks" in US
+[2025-08-12T08:58:55.327Z]     Searching: "climbing" in US
+[2025-08-12T08:59:01.546Z]       ✅ Added 194 new apps from "climbing" in US
+[2025-08-12T08:59:02.360Z]     Searching: "bouldering" in US
+[2025-08-12T08:59:07.948Z]       ✅ Added 95 new apps from "bouldering" in US
+[2025-08-12T08:59:08.755Z]     Searching: "top rope" in US
+[2025-08-12T08:59:12.500Z]       ✅ Added 158 new apps from "top rope" in US
+[2025-08-12T08:59:13.305Z]     Searching: "lead climbing" in US
+[2025-08-12T08:59:18.509Z]       ✅ Added 40 new apps from "lead climbing" in US
+[2025-08-12T08:59:19.318Z]     Searching: "mountaineering" in US
+[2025-08-12T08:59:23.716Z]       ✅ Added 99 new apps from "mountaineering" in US
+[2025-08-12T08:59:24.523Z]     Searching: "hiking" in US
+[2025-08-12T08:59:25.107Z]       ✅ Added 104 new apps from "hiking" in US
+[2025-08-12T08:59:25.909Z]     Searching: "backpacking" in US
+[2025-08-12T08:59:31.551Z]       ✅ Added 150 new apps from "backpacking" in US
+[2025-08-12T08:59:32.361Z]     Searching: "trekking" in US
+[2025-08-12T08:59:38.913Z]       ✅ Added 65 new apps from "trekking" in US
+[2025-08-12T08:59:39.727Z]     Searching: "fishing" in US
+[2025-08-12T08:59:43.960Z]       ✅ Added 193 new apps from "fishing" in US
+[2025-08-12T08:59:44.769Z]     Searching: "fly fishing" in US
+[2025-08-12T08:59:48.723Z]       ✅ Added 104 new apps from "fly fishing" in US
+[2025-08-12T08:59:49.525Z]     Searching: "ice fishing" in US
+[2025-08-12T08:59:54.280Z]       ✅ Added 73 new apps from "ice fishing" in US
+[2025-08-12T08:59:55.082Z]     Searching: "bass fishing" in US
+[2025-08-12T09:00:00.938Z]       ✅ Added 44 new apps from "bass fishing" in US
+[2025-08-12T09:00:01.740Z]     Searching: "hunting" in US
+[2025-08-12T09:00:02.919Z]       ✅ Added 176 new apps from "hunting" in US
+[2025-08-12T09:00:03.724Z]     Searching: "deer hunting" in US
+[2025-08-12T09:00:09.781Z]       ✅ Added 86 new apps from "deer hunting" in US
+[2025-08-12T09:00:10.582Z]     Searching: "duck hunting" in US
+[2025-08-12T09:00:15.764Z]       ✅ Added 121 new apps from "duck hunting" in US
+[2025-08-12T09:00:16.573Z]     Searching: "sailing" in US
+[2025-08-12T09:00:17.194Z]       ✅ Added 144 new apps from "sailing" in US
+[2025-08-12T09:00:17.998Z]     Searching: "rowing" in US
+[2025-08-12T09:00:19.205Z]       ✅ Added 141 new apps from "rowing" in US
+[2025-08-12T09:00:20.010Z]     Searching: "kayaking" in US
+[2025-08-12T09:00:20.706Z]       ✅ Added 107 new apps from "kayaking" in US
+[2025-08-12T09:00:21.506Z]     Searching: "canoeing" in US
+[2025-08-12T09:00:22.161Z]       ✅ Added 65 new apps from "canoeing" in US
+[2025-08-12T09:00:22.968Z]     Searching: "table tennis" in US
+[2025-08-12T09:00:23.568Z]       ✅ Added 92 new apps from "table tennis" in US
+[2025-08-12T09:00:24.380Z]     Searching: "darts" in US
+[2025-08-12T09:00:24.949Z]       ✅ Added 172 new apps from "darts" in US
+[2025-08-12T09:00:25.751Z]     Searching: "bowling" in US
+[2025-08-12T09:00:30.109Z]       ✅ Added 176 new apps from "bowling" in US
+[2025-08-12T09:00:30.917Z]     Searching: "ten-pin bowling" in US
+[2025-08-12T09:00:35.298Z]       ✅ Added 34 new apps from "ten-pin bowling" in US
+[2025-08-12T09:00:36.113Z]     Searching: "nine-pin" in US
+[2025-08-12T09:00:41.873Z]       ✅ Added 188 new apps from "nine-pin" in US
+[2025-08-12T09:00:42.678Z]     Searching: "bowls" in US
+[2025-08-12T09:00:47.293Z]       ✅ Added 96 new apps from "bowls" in US
+[2025-08-12T09:00:48.107Z]     Searching: "archery" in US
+[2025-08-12T09:00:48.804Z]       ✅ Added 173 new apps from "archery" in US
+[2025-08-12T09:00:49.617Z]     Searching: "kyudo" in US
+[2025-08-12T09:00:51.526Z]       ✅ Added 92 new apps from "kyudo" in US
+[2025-08-12T09:00:52.341Z]     Searching: "motorsports" in US
+[2025-08-12T09:00:52.942Z]       ✅ Added 176 new apps from "motorsports" in US
+[2025-08-12T09:00:53.756Z]     Searching: "auto racing" in US
+[2025-08-12T09:00:54.823Z]       ✅ Added 162 new apps from "auto racing" in US
+[2025-08-12T09:00:55.624Z]     Searching: "motocross" in US
+[2025-08-12T09:00:56.241Z]       ✅ Added 153 new apps from "motocross" in US
+[2025-08-12T09:00:57.050Z]     Searching: "F1" in US
+[2025-08-12T09:01:03.748Z]       ✅ Added 120 new apps from "F1" in US
+[2025-08-12T09:01:04.564Z]     Searching: "equestrian" in US
+[2025-08-12T09:01:05.332Z]       ✅ Added 207 new apps from "equestrian" in US
+[2025-08-12T09:01:06.136Z]     Searching: "horse racing" in US
+[2025-08-12T09:01:06.795Z]       ✅ Added 155 new apps from "horse racing" in US
+[2025-08-12T09:01:07.598Z]     Searching: "dressage" in US
+[2025-08-12T09:01:13.339Z]       ✅ Added 75 new apps from "dressage" in US
+[2025-08-12T09:01:14.147Z]     Searching: "show jumping" in US
+[2025-08-12T09:01:18.095Z]       ✅ Added 93 new apps from "show jumping" in US
+[2025-08-12T09:01:18.901Z]     Searching: "eventing" in US
+[2025-08-12T09:01:23.128Z]       ✅ Added 91 new apps from "eventing" in US
+[2025-08-12T09:01:23.929Z]     Searching: "rodeo" in US
+[2025-08-12T09:01:28.371Z]       ✅ Added 141 new apps from "rodeo" in US
+[2025-08-12T09:01:29.171Z]     Searching: "curling" in US
+[2025-08-12T09:01:32.814Z]       ✅ Added 89 new apps from "curling" in US
+[2025-08-12T09:01:33.617Z]     Searching: "sledge hockey" in US
+[2025-08-12T09:01:37.689Z]       ✅ Added 38 new apps from "sledge hockey" in US
+[2025-08-12T09:01:38.499Z]     Searching: "goalball" in US
+[2025-08-12T09:01:43.398Z]       ✅ Added 139 new apps from "goalball" in US
+[2025-08-12T09:01:44.211Z]     Searching: "bocce" in US
+[2025-08-12T09:01:46.360Z]       ✅ Added 75 new apps from "bocce" in US
+[2025-08-12T09:01:47.162Z]     Searching: "croquet" in US
+[2025-08-12T09:01:52.654Z]       ✅ Added 81 new apps from "croquet" in US
+[2025-08-12T09:01:53.459Z]     Searching: "petanque" in US
+[2025-08-12T09:01:54.024Z]       ✅ Added 61 new apps from "petanque" in US
+[2025-08-12T09:01:54.832Z]     Searching: "fencing" in US
+[2025-08-12T09:01:58.885Z]       ✅ Added 151 new apps from "fencing" in US
+[2025-08-12T09:01:59.694Z]     Searching: "sport shooting" in US
+[2025-08-12T09:02:06.045Z]       ✅ Added 164 new apps from "sport shooting" in US
+[2025-08-12T09:02:06.857Z]     Searching: "biathlon" in US
+[2025-08-12T09:02:07.958Z]       ✅ Added 34 new apps from "biathlon" in US
+[2025-08-12T09:02:08.763Z]     Searching: "modern pentathlon" in US
+[2025-08-12T09:02:10.783Z]       ✅ Added 40 new apps from "modern pentathlon" in US
+[2025-08-12T09:02:11.598Z]     Searching: "decathlon" in US
+[2025-08-12T09:02:17.449Z]       ✅ Added 109 new apps from "decathlon" in US
+[2025-08-12T09:02:18.255Z]     Searching: "water polo" in US
+[2025-08-12T09:02:19.168Z]       ✅ Added 102 new apps from "water polo" in US
+[2025-08-12T09:02:19.969Z]     Searching: "synchronized swimming" in US
+[2025-08-12T09:02:20.679Z]       ✅ Added 32 new apps from "synchronized swimming" in US
+[2025-08-12T09:02:21.493Z]     Searching: "diving" in US
+[2025-08-12T09:02:25.639Z]       ✅ Added 177 new apps from "diving" in US
+[2025-08-12T09:02:26.448Z]     Searching: "water skiing" in US
+[2025-08-12T09:02:27.085Z]       ✅ Added 50 new apps from "water skiing" in US
+[2025-08-12T09:02:27.896Z]     Searching: "wakeboarding" in US
+[2025-08-12T09:02:28.532Z]       ✅ Added 18 new apps from "wakeboarding" in US
+[2025-08-12T09:02:29.338Z]     Searching: "ultimate frisbee" in US
+[2025-08-12T09:02:30.076Z]       ✅ Added 101 new apps from "ultimate frisbee" in US
+[2025-08-12T09:02:30.880Z]     Searching: "futsal" in US
+[2025-08-12T09:02:31.588Z]       ✅ Added 66 new apps from "futsal" in US
+[2025-08-12T09:02:32.394Z]     Searching: "netball" in US
+[2025-08-12T09:02:37.265Z]       ✅ Added 103 new apps from "netball" in US
+[2025-08-12T09:02:38.074Z]     Searching: "lacrosse" in US
+[2025-08-12T09:02:38.835Z]       ✅ Added 107 new apps from "lacrosse" in US
+[2025-08-12T09:02:39.637Z]     Searching: "handball" in US
+[2025-08-12T09:02:43.097Z]       ✅ Added 97 new apps from "handball" in US
+[2025-08-12T09:02:43.904Z]     Searching: "figure skating" in US
+[2025-08-12T09:02:44.591Z]       ✅ Added 94 new apps from "figure skating" in US
+[2025-08-12T09:02:45.402Z]     Searching: "speed skating" in US
+[2025-08-12T09:02:46.013Z]       ✅ Added 49 new apps from "speed skating" in US
+[2025-08-12T09:02:46.822Z]     Searching: "bobsled" in US
+[2025-08-12T09:02:51.287Z]       ✅ Added 57 new apps from "bobsled" in US
+[2025-08-12T09:02:52.095Z]     Searching: "luge" in US
+[2025-08-12T09:02:52.792Z]       ✅ Added 72 new apps from "luge" in US
+[2025-08-12T09:02:53.607Z]     Searching: "skeleton" in US
+[2025-08-12T09:02:54.165Z]       ✅ Added 162 new apps from "skeleton" in US
+[2025-08-12T09:02:54.981Z]     Searching: "powerlifting" in US
+[2025-08-12T09:02:56.144Z]       ✅ Added 204 new apps from "powerlifting" in US
+[2025-08-12T09:02:56.954Z]     Searching: "bodybuilding" in US
+[2025-08-12T09:03:03.749Z]       ✅ Added 156 new apps from "bodybuilding" in US
+[2025-08-12T09:03:04.562Z]     Searching: "crossfit" in US
+[2025-08-12T09:03:05.393Z]       ✅ Added 166 new apps from "crossfit" in US
+[2025-08-12T09:03:06.194Z]     Searching: "calisthenics" in US
+[2025-08-12T09:03:13.054Z]       ✅ Added 166 new apps from "calisthenics" in US
+[2025-08-12T09:03:13.864Z]     Searching: "parkour" in US
+[2025-08-12T09:03:18.957Z]       ✅ Added 154 new apps from "parkour" in US
+[2025-08-12T09:03:19.770Z]     Searching: "breakdancing" in US
+[2025-08-12T09:03:20.656Z]       ✅ Added 205 new apps from "breakdancing" in US
+[2025-08-12T09:03:21.467Z]     Searching: "cheerleading" in US
+[2025-08-12T09:03:22.227Z]       ✅ Added 133 new apps from "cheerleading" in US
+[2025-08-12T09:03:23.039Z]     Searching: "dance sport" in US
+[2025-08-12T09:03:24.357Z]       ✅ Added 160 new apps from "dance sport" in US
+[2025-08-12T09:03:25.171Z]     Searching: "roller derby" in US
+[2025-08-12T09:03:25.786Z]       ✅ Added 90 new apps from "roller derby" in US
+[2025-08-12T09:03:26.588Z]     Searching: "kabaddi" in US
+[2025-08-12T09:03:27.569Z]       ✅ Added 83 new apps from "kabaddi" in US
+[2025-08-12T09:03:28.383Z]     Searching: "sepak takraw" in US
+[2025-08-12T09:03:29.129Z]       ✅ Added 206 new apps from "sepak takraw" in US
+[2025-08-12T09:03:29.942Z]     Searching: "hurling" in US
+[2025-08-12T09:03:30.582Z]       ✅ Added 69 new apps from "hurling" in US
+[2025-08-12T09:03:31.390Z]     Searching: "kho kho" in US
+[2025-08-12T09:03:35.650Z]       ✅ Added 173 new apps from "kho kho" in US
+[2025-08-12T09:03:36.460Z]     Searching: "gilli danda" in US
+[2025-08-12T09:03:41.116Z]       ✅ Added 52 new apps from "gilli danda" in US
+[2025-08-12T09:03:41.915Z]     Searching: "footvolley" in US
+[2025-08-12T09:03:47.949Z]       ✅ Added 162 new apps from "footvolley" in US
+[2025-08-12T09:03:48.757Z]     Searching: "jai alai" in US
+[2025-08-12T09:03:49.709Z]       ✅ Added 100 new apps from "jai alai" in US
+[2025-08-12T09:03:50.514Z]     Searching: "bullfighting" in US
+[2025-08-12T09:03:53.216Z]       ✅ Added 62 new apps from "bullfighting" in US
+[2025-08-12T09:03:54.024Z]     Searching: "arnis" in US
+[2025-08-12T09:03:55.386Z]       ✅ Added 41 new apps from "arnis" in US
+[2025-08-12T09:03:56.193Z]     Searching: "sipa" in US
+[2025-08-12T09:03:57.442Z]       ✅ Added 27 new apps from "sipa" in US
+[2025-08-12T09:03:58.247Z]     Searching: "mma" in US
+[2025-08-12T09:03:58.939Z]       ✅ Added 92 new apps from "mma" in US
+[2025-08-12T09:03:59.750Z]     Searching: "mixed martial arts" in US
+[2025-08-12T09:04:03.778Z]       ✅ Added 26 new apps from "mixed martial arts" in US
+[2025-08-12T09:04:04.584Z]     Searching: "judo" in US
+[2025-08-12T09:04:05.295Z]       ✅ Added 116 new apps from "judo" in US
+[2025-08-12T09:04:06.103Z]     Searching: "karate" in US
+[2025-08-12T09:04:06.827Z]       ✅ Added 82 new apps from "karate" in US
+[2025-08-12T09:04:07.641Z]     Searching: "taekwondo" in US
+[2025-08-12T09:04:08.453Z]       ✅ Added 88 new apps from "taekwondo" in US
+[2025-08-12T09:04:09.259Z]     Searching: "kickboxing" in US
+[2025-08-12T09:04:09.994Z]       ✅ Added 67 new apps from "kickboxing" in US
+[2025-08-12T09:04:10.803Z]     Searching: "sumo" in US
+[2025-08-12T09:04:14.159Z]       ✅ Added 146 new apps from "sumo" in US
+[2025-08-12T09:04:14.969Z]     Searching: "wrestling" in US
+[2025-08-12T09:04:15.687Z]       ✅ Added 121 new apps from "wrestling" in US
+[2025-08-12T09:04:16.495Z]     Searching: "kendo" in US
+[2025-08-12T09:04:17.254Z]       ✅ Added 66 new apps from "kendo" in US
+[2025-08-12T09:04:18.064Z]     Searching: "sambo" in US
+[2025-08-12T09:04:19.024Z]       ✅ Added 26 new apps from "sambo" in US
+[2025-08-12T09:04:19.836Z]     Searching: "krav maga" in US
+[2025-08-12T09:04:23.491Z]       ✅ Added 45 new apps from "krav maga" in US
+[2025-08-12T09:04:24.303Z]     Searching: "bjj" in US
+[2025-08-12T09:04:28.111Z]       ✅ Added 52 new apps from "bjj" in US
+[2025-08-12T09:04:28.918Z]     Searching: "brazilian jiu-jitsu" in US
+[2025-08-12T09:04:32.849Z]       ✅ Added 48 new apps from "brazilian jiu-jitsu" in US
+[2025-08-12T09:04:33.659Z]     Searching: "sports news" in US
+[2025-08-12T09:04:38.517Z]       ✅ Added 167 new apps from "sports news" in US
+[2025-08-12T09:04:39.323Z]     Searching: "sports scores" in US
+[2025-08-12T09:04:40.276Z]       ✅ Added 104 new apps from "sports scores" in US
+[2025-08-12T09:04:41.079Z]     Searching: "sports highlights" in US
+[2025-08-12T09:04:46.505Z]       ✅ Added 97 new apps from "sports highlights" in US
+[2025-08-12T09:04:47.313Z]     Searching: "sports live" in US
+[2025-08-12T09:04:51.992Z]       ✅ Added 67 new apps from "sports live" in US
+[2025-08-12T09:04:52.804Z]     Searching: "sports streaming" in US
+[2025-08-12T09:04:53.949Z]       ✅ Added 92 new apps from "sports streaming" in US
+[2025-08-12T09:04:54.764Z]     Searching: "fantasy sports" in US
+[2025-08-12T09:04:59.543Z]       ✅ Added 85 new apps from "fantasy sports" in US
+[2025-08-12T09:05:00.357Z]     Searching: "sports betting" in US
+[2025-08-12T09:05:04.422Z]       ✅ Added 105 new apps from "sports betting" in US
+[2025-08-12T09:05:05.233Z]     Searching: "sports odds" in US
+[2025-08-12T09:05:10.711Z]       ✅ Added 55 new apps from "sports odds" in US
+[2025-08-12T09:05:11.526Z]     Searching: "sports coach" in US
+[2025-08-12T09:05:12.783Z]       ✅ Added 135 new apps from "sports coach" in US
+[2025-08-12T09:05:13.596Z]     Searching: "sports training" in US
+[2025-08-12T09:05:14.512Z]       ✅ Added 79 new apps from "sports training" in US
+[2025-08-12T09:05:15.325Z]     Searching: "sports technique" in US
+[2025-08-12T09:05:19.095Z]       ✅ Added 81 new apps from "sports technique" in US
+[2025-08-12T09:05:19.900Z]     Searching: "sports drills" in US
+[2025-08-12T09:05:24.204Z]       ✅ Added 49 new apps from "sports drills" in US
+[2025-08-12T09:05:25.008Z]     Searching: "team management" in US
+[2025-08-12T09:05:29.548Z]       ✅ Added 172 new apps from "team management" in US
+[2025-08-12T09:05:30.360Z]     Searching: "sports league" in US
+[2025-08-12T09:05:35.147Z]       ✅ Added 92 new apps from "sports league" in US
+[2025-08-12T09:05:35.958Z]     Searching: "sports tournament" in US
+[2025-08-12T09:05:40.949Z]       ✅ Added 103 new apps from "sports tournament" in US
+[2025-08-12T09:05:41.751Z]     Searching: "sports registration" in US
+[2025-08-12T09:05:46.281Z]       ✅ Added 102 new apps from "sports registration" in US
+[2025-08-12T09:05:47.094Z]     Searching: "sports club" in US
+[2025-08-12T09:05:53.872Z]       ✅ Added 132 new apps from "sports club" in US
+[2025-08-12T09:05:54.687Z]     Searching: "sports academy" in US
+[2025-08-12T09:06:04.185Z]       ✅ Added 93 new apps from "sports academy" in US
+[2025-08-12T09:06:04.992Z]     Searching: "sports tryouts" in US
+[2025-08-12T09:06:09.132Z]       ✅ Added 65 new apps from "sports tryouts" in US
+[2025-08-12T09:06:09.947Z]     Searching: "sports recruiting" in US
+[2025-08-12T09:06:15.656Z]       ✅ Added 81 new apps from "sports recruiting" in US
+[2025-08-12T09:06:16.468Z]     Searching: "sports analytics" in US
+[2025-08-12T09:06:17.607Z]       ✅ Added 97 new apps from "sports analytics" in US
+[2025-08-12T09:06:18.415Z]     Searching: "sports statistics" in US
+[2025-08-12T09:06:19.340Z]       ✅ Added 44 new apps from "sports statistics" in US
+[2025-08-12T09:06:20.145Z]     Searching: "sports metrics" in US
+[2025-08-12T09:06:24.488Z]       ✅ Added 47 new apps from "sports metrics" in US
+[2025-08-12T09:06:25.297Z]     Searching: "sports AI" in US
+[2025-08-12T09:06:30.027Z]       ✅ Added 47 new apps from "sports AI" in US
+[2025-08-12T09:06:30.833Z]     Searching: "sports physio" in US
+[2025-08-12T09:06:35.275Z]       ✅ Added 94 new apps from "sports physio" in US
+[2025-08-12T09:06:36.091Z]     Searching: "sports rehab" in US
+[2025-08-12T09:06:40.723Z]       ✅ Added 123 new apps from "sports rehab" in US
+[2025-08-12T09:06:41.529Z]     Searching: "sports injury" in US
+[2025-08-12T09:06:45.716Z]       ✅ Added 53 new apps from "sports injury" in US
+[2025-08-12T09:06:46.526Z]     Searching: "sports medicine" in US
+[2025-08-12T09:06:51.098Z]       ✅ Added 66 new apps from "sports medicine" in US
+[2025-08-12T09:06:51.903Z]     Searching: "sports nutrition" in US
+[2025-08-12T09:06:57.879Z]       ✅ Added 178 new apps from "sports nutrition" in US
+[2025-08-12T09:06:58.690Z]     Searching: "sports diet" in US
+[2025-08-12T09:07:05.224Z]       ✅ Added 123 new apps from "sports diet" in US
+[2025-08-12T09:07:06.029Z]     Searching: "sports psychology" in US
+[2025-08-12T09:07:12.733Z]       ✅ Added 132 new apps from "sports psychology" in US
+[2025-08-12T09:07:13.539Z]     Searching: "sports tickets" in US
+[2025-08-12T09:07:16.884Z]       ✅ Added 170 new apps from "sports tickets" in US
+[2025-08-12T09:07:17.695Z]     Searching: "sports events" in US
+[2025-08-12T09:07:21.893Z]       ✅ Added 74 new apps from "sports events" in US
+[2025-08-12T09:07:22.694Z]     Searching: "sports events near me" in US
+[2025-08-12T09:07:26.839Z]       ✅ Added 52 new apps from "sports events near me" in US
+[2025-08-12T09:07:27.647Z]     Searching: "sports video analysis" in US
+[2025-08-12T09:07:32.178Z]       ✅ Added 88 new apps from "sports video analysis" in US
+[2025-08-12T09:07:32.985Z]     Searching: "sports replay" in US
+[2025-08-12T09:07:37.053Z]       ✅ Added 45 new apps from "sports replay" in US
+[2025-08-12T09:07:37.859Z]     Searching: "sports VR" in US
+[2025-08-12T09:07:42.628Z]       ✅ Added 115 new apps from "sports VR" in US
+[2025-08-12T09:07:43.438Z]     Searching: "sports AR" in US
+[2025-08-12T09:07:47.443Z]       ✅ Added 109 new apps from "sports AR" in US
+[2025-08-12T09:07:48.256Z]     Searching: "sports tracker" in US
+[2025-08-12T09:07:54.257Z]       ✅ Added 62 new apps from "sports tracker" in US
+[2025-08-12T09:07:55.070Z]     Searching: "sports GPS" in US
+[2025-08-12T09:08:01.637Z]       ✅ Added 79 new apps from "sports GPS" in US
+[2025-08-12T09:08:02.438Z]     Searching: "sports wearable" in US
+[2025-08-12T09:08:06.673Z]       ✅ Added 71 new apps from "sports wearable" in US
+[2025-08-12T09:08:07.480Z]     Searching: "sports watch" in US
+[2025-08-12T09:08:11.908Z]       ✅ Added 68 new apps from "sports watch" in US
+[2025-08-12T09:08:12.713Z]     Searching: "sports timer" in US
+[2025-08-12T09:08:13.905Z]       ✅ Added 166 new apps from "sports timer" in US
+[2025-08-12T09:08:14.709Z]     Searching: "sports sensor" in US
+[2025-08-12T09:08:22.022Z]       ✅ Added 47 new apps from "sports sensor" in US
+[2025-08-12T09:08:22.830Z]     Searching: "sports tech" in US
+[2025-08-12T09:08:27.060Z]       ✅ Added 37 new apps from "sports tech" in US
+[2025-08-12T09:08:27.864Z]     Searching: "sports performance" in US
+[2025-08-12T09:08:32.980Z]       ✅ Added 79 new apps from "sports performance" in US
+[2025-08-12T09:08:33.783Z]     Searching: "referee" in US
+[2025-08-12T09:08:34.582Z]       ✅ Added 148 new apps from "referee" in US
+[2025-08-12T09:08:35.394Z]     Searching: "scorekeeper" in US
+[2025-08-12T09:08:36.154Z]       ✅ Added 150 new apps from "scorekeeper" in US
+[2025-08-12T09:08:36.955Z]     Searching: "sports whistle" in US
+[2025-08-12T09:08:41.566Z]       ✅ Added 95 new apps from "sports whistle" in US
+[2025-08-12T09:08:42.372Z]     Searching: "youth sports" in US
+[2025-08-12T09:08:47.428Z]       ✅ Added 43 new apps from "youth sports" in US
+[2025-08-12T09:08:48.241Z]     Searching: "sports for kids" in US
+[2025-08-12T09:08:54.330Z]       ✅ Added 52 new apps from "sports for kids" in US
+[2025-08-12T09:08:55.132Z]     Searching: "sports camps" in US
+[2025-08-12T09:08:59.167Z]       ✅ Added 75 new apps from "sports camps" in US
+[2025-08-12T09:08:59.970Z]     Searching: "paralympic sports" in US
+[2025-08-12T09:09:03.937Z]       ✅ Added 56 new apps from "paralympic sports" in US
+[2025-08-12T09:09:04.745Z]     Searching: "adaptive sports" in US
+[2025-08-12T09:09:10.134Z]       ✅ Added 17 new apps from "adaptive sports" in US
+[2025-08-12T09:09:10.940Z]     Searching: "veteran sports" in US
+[2025-08-12T09:09:14.940Z]       ✅ Added 29 new apps from "veteran sports" in US
+[2025-08-12T09:09:15.753Z]     Searching: "esports" in US
+[2025-08-12T09:09:23.367Z]       ✅ Added 73 new apps from "esports" in US
+[2025-08-12T09:09:24.183Z]     Searching: "esports team" in US
+[2025-08-12T09:09:28.738Z]       ✅ Added 61 new apps from "esports team" in US
+[2025-08-12T09:09:29.546Z]     Searching: "esports tournament" in US
+[2025-08-12T09:09:33.434Z]       ✅ Added 23 new apps from "esports tournament" in US
+[2025-08-12T09:09:34.235Z]     Searching: "esports news" in US
+[2025-08-12T09:09:40.310Z]       ✅ Added 72 new apps from "esports news" in US
+[2025-08-12T09:09:41.111Z]     Searching: "esports scores" in US
+[2025-08-12T09:09:45.335Z]       ✅ Added 23 new apps from "esports scores" in US
+[2025-08-12T09:09:46.147Z]     Searching: "esports betting" in US
+[2025-08-12T09:09:50.517Z]       ✅ Added 28 new apps from "esports betting" in US
+[2025-08-12T09:09:51.319Z]     Searching: "esports stream" in US
+[2025-08-12T09:09:55.584Z]       ✅ Added 27 new apps from "esports stream" in US
+[2025-08-12T09:09:56.386Z] 
+🎯 Total unique App Store sports apps collected: 25084
+[2025-08-12T09:09:56.388Z] 
+📊 APP STORE COLLECTION SUMMARY
+[2025-08-12T09:09:56.395Z] ==================================================
+[2025-08-12T09:09:56.406Z] Total Apps: 25084
+[2025-08-12T09:09:56.407Z] 
+By Category:
+[2025-08-12T09:09:56.408Z]   SPORTS: 25084 apps
+[2025-08-12T09:09:56.415Z] 
+By Source Method:
+[2025-08-12T09:09:56.416Z]   list: 669 apps
+[2025-08-12T09:09:56.426Z]   search: 24415 apps
+[2025-08-12T09:09:56.426Z] 
+By Country (Top 10):
+[2025-08-12T09:09:56.428Z]   US: 25084 apps
+[2025-08-12T09:09:56.428Z] 
+Free vs Paid:
+[2025-08-12T09:09:56.429Z]   Free: 23502 apps
+[2025-08-12T09:09:56.430Z]   Paid: 1582 apps
+[2025-08-12T09:09:56.469Z] 
+Top 10 Developers:
+[2025-08-12T09:09:56.469Z]   1. Paul Scott: 80 apps
+[2025-08-12T09:09:56.472Z]   2. Liping Liu: 72 apps
+[2025-08-12T09:09:56.480Z]   3. OTT Software Solutions Limited: 60 apps
+[2025-08-12T09:09:56.482Z]   4. Mobile Inventor Corp: 58 apps
+[2025-08-12T09:09:56.483Z]   5. Sportsground: 57 apps
+[2025-08-12T09:09:56.485Z]   6. Gannett: 55 apps
+[2025-08-12T09:09:56.485Z]   7. NAOYA ONO: 50 apps
+[2025-08-12T09:09:56.486Z]   8. CricClubs LLC: 48 apps
+[2025-08-12T09:09:56.487Z]   9. Gallus Golf: 45 apps
+[2025-08-12T09:09:56.488Z]   10. JADAYA INVERSIONES SOCIEDAD LIMITADA: 42 apps
+[2025-08-12T09:09:56.972Z] 
+📁 App Store JSON data exported to appstore_sports_fitness_apps_comprehensive_2025-08-12T09-09-56-489Z.json
+[2025-08-12T09:09:57.178Z] 📊 App Store CSV data exported to appstore_sports_fitness_apps_comprehensive_2025-08-12T09-09-56-489Z.csv
+[2025-08-12T09:09:57.178Z] 
+✅ Comprehensive App Store sports app mapping completed!
+[2025-08-12T09:09:57.181Z] 📄 Files created:
+[2025-08-12T09:09:57.188Z]   - appstore_sports_fitness_apps_comprehensive_2025-08-12T09-09-56-489Z.json (for data analysis)
+[2025-08-12T09:09:57.189Z]   - appstore_sports_fitness_apps_comprehensive_2025-08-12T09-09-56-489Z.csv (for Excel import)
+[2025-08-12T09:09:57.190Z] 
+🍎 Summary: Collected 25084 sports apps from Apple App Store
+[2025-08-12T09:09:57.191Z] 
+⏱️  ACTUAL TIME TAKEN:
+[2025-08-12T09:09:57.193Z]    🏁 Finished at: 2025-08-12T09:09:57.191Z
+[2025-08-12T09:09:57.203Z]    ⌛ Total duration: 0h 17m 47s (1067 seconds)
+[2025-08-12T09:09:57.204Z]    📊 Performance: 1067375ms total

@@ -116,4 +116,21 @@ app.*.symbols
 !**/ios/**/default.pbxuser
 !**/ios/**/default.perspectivev3
 !/packages/flutter_tools/test/data/dart_dependencies_test/**/.packages
-!/dev/ci/**/Gemfile.lock
+!/dev/ci/**/Gemfile.locknode_modules
+
+# Excel files
+*.xlsx
+
+# CSV files
+*.csv
+
+# Scraped data folder
+scrapedData/
+
+# Cache folder contents (but keep the folder structure)
+cache/*
+!cache/.gitkeep
+
+# combinations data folder
+combinations/
+

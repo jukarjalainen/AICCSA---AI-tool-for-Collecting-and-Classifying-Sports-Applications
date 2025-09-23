@@ -1,0 +1,16 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Run app_store_scraper.js",
+			"type": "shell",
+			"command": "node",
+			"args": [
+				"app-store-scraper/app_store_scraper.js"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		}
+	]
+}

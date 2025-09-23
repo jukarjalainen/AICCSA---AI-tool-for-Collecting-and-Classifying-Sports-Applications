@@ -1,0 +1,99 @@
+const searchQueries = [
+  // Traditional Sports
+  "football", "soccer", "futbol", "american football", "flag football", "australian football", "gaelic football", "gridiron",
+  "basketball", "3x3 basketball", "streetball",
+  "baseball", "softball", "fastpitch",
+  "tennis", "padel", "beach tennis", "paddle tennis",
+  "golf", "disc golf", "mini golf", "putting", "golf swing",
+  "running", "trail running", "jogging", "sprint", "ultra running",
+  "cycling", "mountain biking", "road cycling", "gravel cycling", "cyclocross", "velodrome", "track cycling", "bmx", "scooter",
+  "swimming", "open water swimming", "pool swimming", "swim workout",
+  "volleyball", "beach volleyball", "indoor volleyball", "net sport",
+  "hockey", "ice hockey", "field hockey", "street hockey", "ball hockey", "floorball",
+  "rugby", "sevens rugby",
+  "cricket", "test cricket", "T20", "ODI", "cricket live",
+  "athletics", "track and field", "marathon", "triathlon", "ironman", "duathlon", "aquathlon",
+  "badminton", "squash", "racquetball",
+  "boxing", "muay thai", "savate",
+  "martial arts", "kung fu", "capoeira", "wushu",
+  "gymnastics", "trampoline",
+  "skiing", "cross-country skiing", "snowboarding",
+  "surfing", "bodyboarding", "wake surfing", "windsurfing", "kitesurfing",
+  "skateboarding", "longboarding", "skateboard tricks",
+  "climbing", "bouldering", "top rope", "lead climbing", "mountaineering",
+  "hiking", "backpacking", "trekking",
+  "fishing", "fly fishing", "ice fishing", "bass fishing",
+  "hunting", "deer hunting", "duck hunting",
+  "sailing", "rowing", "kayaking", "canoeing",
+  "table tennis", "darts", "bowling", "ten-pin bowling", "nine-pin", "bowls",
+  "archery", "kyudo",
+  "motorsports", "auto racing", "motocross", "F1",
+  "equestrian", "horse racing", "dressage", "show jumping", "eventing", "rodeo",
+  "bandy", "shinty",
+  "curling", "sledge hockey", "goalball", "bocce", "croquet", "petanque",
+  "fencing", "sport shooting", "biathlon", "modern pentathlon", "decathlon",
+  "water polo", "synchronized swimming", "diving", "water skiing", "wakeboarding",
+  "ultimate frisbee", "futsal", "netball", "lacrosse", "handball",
+  "figure skating", "speed skating", "bobsled", "luge", "skeleton",
+  "parkour", "breakdancing", "cheerleading", "dance sport", "roller derby",
+  "kabaddi", "sepak takraw", "hurling", "kho kho", "gilli danda",
+  "footvolley", "jai alai", "bullfighting", "arnis", "sipa", "pesäpallo", "salibandy",
+
+  // Combat Sports
+  "mma", "mixed martial arts", "judo", "karate", "taekwondo", "kickboxing",
+  "sumo", "wrestling", "kendo", "sambo", "krav maga", "bjj", "brazilian jiu-jitsu",
+
+  // Sports Services & Management
+  "sports news", "sports scores", "sports highlights", "sports live", "sports streaming", "manager",
+  "fantasy sports", "sports betting", "sports odds",
+  "sports coach", "sports training", "sports technique", "sports drills",
+  "team management", "team roster", "match scheduler", "sports league", "sports tournament","tournament manager", "league manager", "sports registration",
+  "sports club", "sports academy", "fixtures", "sports tryouts", "sports recruiting",
+  "sports analytics", "sports statistics", "sports metrics", "sports AI",
+  "sports physio", "sports rehab", "sports injury", "sports medicine",
+  "sports nutrition", "sports diet", "sports psychology",
+  "sports tickets", "sports events", "sports events near me",
+  "sports video analysis", "sports replay", "sports VR", "sports AR", "scoreboard", "stadium", "arena", "live match", "live sports",
+  "race timing", "official results",
+
+  // Equipment & Tracking
+  "sports tracker", "sports GPS", "sports wearable", "sports watch",
+  "sports timer", "sports sensor", "sports tech", "sports performance",
+  "referee", "scorekeeper", "sports whistle",
+
+  // Youth & Specialized
+  "youth sports", "sports for kids", "sports camps",
+  "paralympic sports", "adaptive sports", "veteran sports",
+
+  // eSports & Virtual
+  "esports", "esports team", "esports tournament",
+  "esports news", "esports scores", "esports betting", "esports stream",
+
+  // Health & Fitness - Workout Types
+  "workout", "exercise", "gym", "fitness training", "strength training", "cardio workout",
+  "hiit workout", "bodybuilding", "weightlifting", "functional training", "circuit training", "interval training", "tabata",
+  "pilates", "yoga", "barre", "zumba", "bodyweight workout", "plyometrics", "functional fitness", "endurance training", "sports conditioning",
+
+  // Home & Equipment
+  "home workout", "home gym", "dumbbell workout", "barbell workout", "kettlebell",
+  "resistance band", "pull up", "push up", "abs workout", "core workout", "leg workout", "arm workout", "chest workout", "back workout",
+
+  // Trainers & Coaching
+  "personal trainer", "fitness coach", "workout coach", "exercise coach",
+  "training program", "workout plan", "fitness plan", "exercise routine",
+
+  // Tracking & Measurement
+  "exercise tracker", "workout tracker", "fitness tracker", "activity tracker",
+  "step counter", "calorie tracker", "heart rate", "fitness monitoring", "gps running", "vo2 max", "pace tracker", "distance tracker",
+
+  // Specialized Fitness
+  "muscle building", "fat loss", "athletic training", "flexibility", "mobility", "stretching", "rehabilitation", "physical therapy", "injury prevention",
+  "foam rolling", "myofascial release", "sports massage", "post workout recovery", "active recovery",
+
+  // Group Fitness
+  "group fitness", "fitness class", "workout class", "boot camp", "spin class", "cycling class", "aerobics", "dance fitness",
+  "les mills", "trx", "booty workout", "kickboxing workout", "martial arts fitness",
+
+  // Motivational & Gamified
+  "challenge tracker", "fitness challenge", "30 day workout", "step challenge", "leaderboard fitness"
+];
