@@ -138,7 +138,9 @@ combinations/
 # Log files
 scraper_log*
 
-# JSON files in scraper directories
+# JSON files in scraper directories and root (but not in lists/)
+*.json
+!lists/*.json
 google-play-scraper/*.json
 app-store-scraper/*.json
 
