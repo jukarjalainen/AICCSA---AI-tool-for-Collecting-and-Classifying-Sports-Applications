@@ -120,6 +120,7 @@ app.*.symbols
 
 # Excel files
 *.xlsx
+*.xlsb
 
 # CSV files
 *.csv
