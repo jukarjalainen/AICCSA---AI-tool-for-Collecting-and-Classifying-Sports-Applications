@@ -134,3 +134,13 @@ cache/*
 # combinations data folder
 combinations/
 
+# Log files
+scraper_log*
+
+# JSON files in scraper directories
+google-play-scraper/*.json
+app-store-scraper/*.json
+
+# TXT files in scraper directories
+google-play-scraper/*.txt
+app-store-scraper/*.txt
