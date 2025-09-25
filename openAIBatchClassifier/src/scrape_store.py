@@ -7,18 +7,22 @@ from .utils import ensure_dir, looks_like_track_id, write_jsonl, backoff_sleep
 CACHE_PATH = os.path.join(config.OUT_DIR, "desc_cache.json")
 
 def _load_cache():
+    """Retrieve the cached descriptions map from disk (if present)."""
     if os.path.exists(CACHE_PATH):
         with open(CACHE_PATH, "r", encoding="utf-8") as f:
             return json.load(f)
     return {}
 
 def _save_cache(cache: dict):
+    """Persist the descriptions cache so subsequent runs can reuse results."""
     with open(CACHE_PATH, "w", encoding="utf-8") as f:
         json.dump(cache, f, ensure_ascii=False)
 
 def get_desc_android(pkg: str, cache: dict) -> str:
+    """Fetch an Android app's description, consulting cache and retries."""
     key = f"Android::{pkg}"
-    if key in cache: return cache[key]
+    if key in cache:
+        return cache[key]
     desc = ""
     for attempt in range(config.MAX_RETRIES):
         try:
@@ -31,8 +35,10 @@ def get_desc_android(pkg: str, cache: dict) -> str:
     return desc
 
 def get_desc_ios(app_id: str, cache: dict) -> str:
+    """Fetch an iOS app's description, toggling between track ID and bundle lookups."""
     key = f"iOS::{app_id}"
-    if key in cache: return cache[key]
+    if key in cache:
+        return cache[key]
     if looks_like_track_id(app_id):
         url = f"https://itunes.apple.com/lookup?id={app_id}"
     else:
@@ -51,6 +57,7 @@ def get_desc_ios(app_id: str, cache: dict) -> str:
     return desc
 
 def run_scrape():
+    """Main entry point: gather descriptions for apps listed in the source table."""
     ensure_dir(config.OUT_DIR)
     df = read_table.read_app_table()
     rows = df.to_dict(orient="records")
@@ -73,7 +80,7 @@ def run_scrape():
     _save_cache(cache)
     write_jsonl(config.DESCRIPTIONS_JSONL, out)
 
-    print(f"Saved {len(out)} records → {config.DESCRIPTIONS_JSONL}")
+    print(f"Saved {len(out)} records -> {config.DESCRIPTIONS_JSONL}")
     print(f"Descriptions missing/empty: {empty_count}")
 
 if __name__ == "__main__":

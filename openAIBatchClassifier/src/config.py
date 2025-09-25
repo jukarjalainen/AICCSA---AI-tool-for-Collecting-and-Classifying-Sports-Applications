@@ -22,7 +22,7 @@ CHUNK_SIZE = 200            # apps per request (prompt sent once per chunk)
 
 # ---------- Input columns ----------
 COL_ID = "id"
-COL_PLATFORM = "Platform"   # "iOS" or "Android"
+COL_PLATFORM = "platform"   # "iOS" or "Android"
 
 # ---------- Networking / scraping ----------
 REQUEST_TIMEOUT = 20

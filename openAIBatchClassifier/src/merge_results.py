@@ -1,4 +1,5 @@
-import json, pandas as pd
+import os, json, pandas as pd
+from datetime import datetime
 from . import config, read_table
 
 def parse_batch_output():
@@ -24,7 +25,7 @@ def merge_to_excel():
     preds = parse_batch_output()
 
     # normalize
-    for col in ("id","platform"):
+    for col in ("id", "platform"):
         if col in preds.columns:
             preds[col] = preds[col].astype(str).str.strip()
 
@@ -36,8 +37,14 @@ def merge_to_excel():
     preds = preds[keep]
 
     merged = base.merge(preds, on=["id","platform"], how="left")
-    merged.to_excel(config.OUTPUT_XLSX, index=False)
-    print("Wrote:", config.OUTPUT_XLSX)
+
+    # ---- timestamped output name: YYYY-DD-MM_HHMM ----
+    ts = datetime.now().strftime("%Y-%d-%m_%H%M")  # year-day-month_hourminute
+    out_name = f"apps_with_classification_{ts}.xlsx"
+    out_path = os.path.join(config.OUT_DIR, out_name)
+
+    merged.to_excel(out_path, index=False)
+    print("Wrote:", out_path)
 
 if __name__ == "__main__":
     merge_to_excel()
