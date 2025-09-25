@@ -304,7 +304,7 @@ MODEL_TO_EXCEL_COL = {
 def _abs(path: str) -> str:
     return path if os.path.isabs(path) else os.path.join(BASE_DIR, path)
 
-def main(test_rows=None):
+def main(test_rows=None, start_row=None, end_row=None):
     if not os.getenv("OPENAI_API_KEY"):
         print("⛔ OPENAI_API_KEY not set. Set it before running. Example PowerShell: $env:OPENAI_API_KEY='sk-...' ")
         return
@@ -393,6 +393,20 @@ def main(test_rows=None):
         return False
 
     needing = [i for i, r in source_df.iterrows() if needs_classification(r)]
+    
+    # Apply row range filtering if specified
+    if start_row is not None or end_row is not None:
+        if start_row is not None and end_row is not None:
+            # Filter to specific range
+            needing = [i for i in needing if start_row <= i < end_row]
+            print(f"Row range mode: filtering to rows {start_row}-{end_row-1}")
+        elif start_row is not None:
+            needing = [i for i in needing if i >= start_row]
+            print(f"Row range mode: filtering to rows {start_row}+")
+        elif end_row is not None:
+            needing = [i for i in needing if i < end_row]
+            print(f"Row range mode: filtering to rows 0-{end_row-1}")
+    
     if test_rows is not None:
         work_indices = needing[:test_rows]
         print(f"Test mode: classifying {len(work_indices)} of {len(needing)} rows needing classification")
@@ -531,6 +545,8 @@ if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(description="Classify app rows via OpenAI")
     parser.add_argument("--test-rows", "-n", type=int, default=None, help="Limit to first N rows")
+    parser.add_argument("--start-row", type=int, default=None, help="Start row index (0-based)")
+    parser.add_argument("--end-row", type=int, default=None, help="End row index (0-based, exclusive)")
     parser.add_argument("--input", type=str, default=None, help="Override input Excel path")
     parser.add_argument("--output", type=str, default=None, help="Override output Excel path")
     args = parser.parse_args()
@@ -538,4 +554,4 @@ if __name__ == "__main__":
         INPUT_FILE = args.input
     if args.output:
         OUTPUT_FILE = args.output
-    main(test_rows=args.test_rows)
+    main(test_rows=args.test_rows, start_row=args.start_row, end_row=args.end_row)
