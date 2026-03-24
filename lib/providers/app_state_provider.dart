@@ -7,6 +7,8 @@ class AppStateProvider with ChangeNotifier {
     targetStore: 'google_play',
     keywords: '',
     countries: ['US'],
+    searchGooglePlayTopLists: false,
+    topCollectionGenre: 'SPORTS',
     llmModel: 'gpt-4',
   );
 
@@ -73,6 +75,10 @@ class AppStateProvider with ChangeNotifier {
       final keywords = prefs.getString('keywords') ?? '';
       final countries = prefs.getStringList('countries') ?? ['US'];
       final collection = prefs.getString('collection');
+      final searchGooglePlayTopLists =
+          prefs.getBool('searchGooglePlayTopLists') ?? false;
+      final topCollectionGenre =
+          prefs.getString('topCollectionGenre') ?? 'SPORTS';
       final llmModel = prefs.getString('llmModel') ?? 'gpt-4';
 
       _configuration = AppConfiguration(
@@ -80,6 +86,8 @@ class AppStateProvider with ChangeNotifier {
         keywords: keywords,
         countries: countries,
         collection: collection,
+        searchGooglePlayTopLists: searchGooglePlayTopLists,
+        topCollectionGenre: topCollectionGenre,
         llmModel: llmModel,
       );
       notifyListeners();
@@ -101,6 +109,11 @@ class AppStateProvider with ChangeNotifier {
       if (config.collection != null) {
         await prefs.setString('collection', config.collection!);
       }
+      await prefs.setBool(
+        'searchGooglePlayTopLists',
+        config.searchGooglePlayTopLists,
+      );
+      await prefs.setString('topCollectionGenre', config.topCollectionGenre);
       await prefs.setString('llmModel', config.llmModel);
     } catch (e) {
       debugPrint('Error saving configuration: $e');
@@ -130,6 +143,16 @@ class AppStateProvider with ChangeNotifier {
   // Update collection
   void setCollection(String? collection) {
     _configuration = _configuration.copyWith(collection: collection);
+    notifyListeners();
+  }
+
+  void setSearchGooglePlayTopLists(bool enabled) {
+    _configuration = _configuration.copyWith(searchGooglePlayTopLists: enabled);
+    notifyListeners();
+  }
+
+  void setTopCollectionGenre(String genre) {
+    _configuration = _configuration.copyWith(topCollectionGenre: genre);
     notifyListeners();
   }
 
@@ -184,6 +207,8 @@ class AppStateProvider with ChangeNotifier {
       targetStore: 'google_play',
       keywords: '',
       countries: ['US'],
+      searchGooglePlayTopLists: false,
+      topCollectionGenre: 'SPORTS',
       llmModel: 'gpt-4',
     );
     _progress = ProcessProgress();

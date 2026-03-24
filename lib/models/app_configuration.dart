@@ -3,6 +3,8 @@ class AppConfiguration {
   final String keywords; // Single keyword or path to .txt file
   final List<String> countries;
   final String? collection; // For App Store specific collections
+  final bool searchGooglePlayTopLists;
+  final String topCollectionGenre; // 'SPORTS' or 'HEALTH_AND_FITNESS'
   final String llmModel;
   final bool useCustomApi;
 
@@ -11,6 +13,8 @@ class AppConfiguration {
     required this.keywords,
     required this.countries,
     this.collection,
+    this.searchGooglePlayTopLists = false,
+    this.topCollectionGenre = 'SPORTS',
     this.llmModel = 'gpt-4',
     this.useCustomApi = false,
   });
@@ -20,6 +24,8 @@ class AppConfiguration {
     String? keywords,
     List<String>? countries,
     String? collection,
+    bool? searchGooglePlayTopLists,
+    String? topCollectionGenre,
     String? llmModel,
     bool? useCustomApi,
   }) {
@@ -28,6 +34,9 @@ class AppConfiguration {
       keywords: keywords ?? this.keywords,
       countries: countries ?? this.countries,
       collection: collection ?? this.collection,
+      searchGooglePlayTopLists:
+          searchGooglePlayTopLists ?? this.searchGooglePlayTopLists,
+      topCollectionGenre: topCollectionGenre ?? this.topCollectionGenre,
       llmModel: llmModel ?? this.llmModel,
       useCustomApi: useCustomApi ?? this.useCustomApi,
     );

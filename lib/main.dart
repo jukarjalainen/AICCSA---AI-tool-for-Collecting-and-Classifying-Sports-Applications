@@ -1,7 +1,8 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'providers/app_state_provider.dart';
-import 'models/app_configuration.dart';
 import 'widgets/configuration_form.dart';
 import 'widgets/progress_display.dart';
 import 'widgets/results_display.dart';
@@ -20,7 +21,7 @@ class MyApp extends StatelessWidget {
     return ChangeNotifierProvider(
       create: (_) => AppStateProvider(),
       child: MaterialApp(
-        title: 'AICCSA - App Intelligence & Classification System',
+        title: 'AICCSA',
         theme: ThemeData(
           useMaterial3: true,
           colorScheme: ColorScheme.fromSeed(
@@ -94,7 +95,8 @@ class _HomePageState extends State<HomePage> {
         keywords: config.keywords,
         countries: config.countries,
         llmModel: config.llmModel,
-        collection: config.collection,
+        searchGooglePlayTopLists: config.searchGooglePlayTopLists,
+        topCollectionGenre: config.topCollectionGenre,
         apiKey: appState.apiKey,
       );
 
@@ -189,6 +191,7 @@ class _HomePageState extends State<HomePage> {
   Future<void> _cancelProcessing() async {
     if (_currentProcess != null) {
       await ProcessService.cancelProcessing(_currentProcess!);
+      if (!mounted) return;
       context.read<AppStateProvider>().resetProgress();
       _showErrorSnackBar('Processing cancelled');
     }
