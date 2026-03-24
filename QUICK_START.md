@@ -1,0 +1,282 @@
+# Quick Start Guide - Testing AICCSA Flutter UI
+
+This guide gets you running the AICCSA Flutter UI in 5 minutes using a mock backend.
+
+## Quick Setup (5 minutes)
+
+### 1. Install Flutter (if not already done)
+
+```bash
+# Download from https://flutter.dev/docs/get-started/install
+# Or use Homebrew (macOS):
+brew install flutter
+
+# Verify installation
+flutter doctor
+```
+
+### 2. Install Project Dependencies
+
+```bash
+cd c:\aiccsa  # or your project directory
+
+# Get Flutter packages
+flutter pub get
+
+# Windows-specific (one-time):
+flutter config --enable-windows-desktop
+```
+
+### 3. Run the App with Mock Backend
+
+Open **2 terminals**:
+
+**Terminal 1 - Run Mock Orchestrator**:
+
+```bash
+cd backend
+python mock_orchestrator.py
+```
+
+**Terminal 2 - Run Flutter App**:
+
+```bash
+flutter run -d windows
+# Or for macOS: flutter run -d macos
+# Or for Linux: flutter run -d linux
+```
+
+The app should launch in a new window!
+
+## Testing the UI Flow (5 minutes)
+
+### Tab 1: Configuration
+
+1. **Store Selection**: Click "Google Play" → "Apple App Store" → "Both"
+2. **Keywords**: Type "sports" or click "Browse" to select a file
+3. **Countries**: Click "US", "DE", "GB" to select multiple
+4. **Collections**: Switch to "Apple App Store" to see collections dropdown
+5. **LLM Model**: Select "GPT-4" from dropdown
+6. **API Key**: Enter any text (it's mocked, so "test-key-123" is fine)
+7. Click "Start Processing" button (green FAB at bottom right)
+
+### Tab 2: Progress
+
+Automatically switches here after clicking Start. You'll see:
+
+- Real-time progress stages: Scraping → Chunking → Uploading → Polling → Merging
+- Progress bar increasing
+- Stage indicators turning green as they complete
+- Batch IDs displaying
+
+### Tab 3: Results
+
+After processing completes (about 15 seconds with mock):
+
+- Click "Results" tab manually, or wait for auto-switch
+- See sample app data in a table
+- "Total Apps: 5" summary
+- Click "Reload Results" or "Export CSV"
+
+## What's Being Tested
+
+✅ **UI Layout**
+
+- Three-tab navigation works
+- Responsive design on desktop
+- All buttons and fields clickable
+
+✅ **State Management**
+
+- Configuration inputs work
+- Progress updates display
+- Transitions between tabs
+
+✅ **Data Persistence**
+
+- API key saved securely
+- Configuration config saved
+- Results display after completion
+
+✅ **Real-time Updates**
+
+- Progress bar animates
+- Stage indicators update
+- Messages display correctly
+
+## Using Real Backend (Optional)
+
+Once you're ready to test with the real backend:
+
+1. **Update ProcessService** (lib/services/process_service.py):
+   Replace the line:
+
+   ```python
+   pythonOrchestrator = 'backend/orchestrator.py'
+   ```
+
+   This already points to the real orchestrator location.
+
+2. **Replace Mock with Real Orchestrator**:
+   - Remove/rename mock_orchestrator.py
+   - Create backend/orchestrator.py with real implementation
+   - Ensure it outputs the correct stage messages
+
+3. **Provide Real API Key**:
+   - Enter a valid OpenAI API key in Configuration tab
+   - Save it securely
+
+4. **Test with Small Dataset**:
+   - Use 1-2 keywords: "sports"
+   - Select 1 country: "US"
+   - Select 1 store: "google_play"
+   - Monitor progress in Progress tab
+
+## Troubleshooting Quick Fixes
+
+### App won't start
+
+```bash
+flutter clean
+flutter pub get
+flutter run -d windows
+```
+
+### Mock doesn't output anything
+
+```bash
+# Make mock_orchestrator.py executable:
+chmod +x backend/mock_orchestrator.py
+
+# Run with explicit Python:
+python backend/mock_orchestrator.py --store=google_play --keywords=sports
+```
+
+### Results CSV missing
+
+- Check backend/output/ directory exists
+- Mock creates it automatically
+- If not appearing, logs should show errors
+
+### Secure storage errors (Windows/Linux)
+
+- This is expected on some platforms
+- Mock still works - file storage is tested
+- Real app requires platform-specific setup
+
+## Customizing the Mock
+
+Edit `backend/mock_orchestrator.py`:
+
+**Change stage duration**:
+
+```python
+stage_times = {
+    'scraping': 3,      # Change to: 1 for faster testing
+    'polling': 5,       # Change to: 2
+    # ... other stages
+}
+```
+
+**Add more sample data**:
+
+```python
+rows = [
+    # Add more CSV rows here
+    'com.example.app,My App,Description,google_play,4.5,Adult,Sports,Training,US',
+]
+```
+
+**Simulate errors**:
+
+```python
+if random.random() > 0.9:  # 10% chance
+    print('ERROR: Simulated API failure', file=sys.stderr)
+    return 1
+```
+
+## File Structure for Testing
+
+```
+aiccsa/
+├── lib/
+│   ├── main.dart                    # Main app
+│   ├── providers/app_state_provider.dart
+│   ├── widgets/                     # UI screens
+│   └── services/                    # Process/storage
+├── backend/
+│   ├── mock_orchestrator.py         # ← Use this for testing
+│   ├── output/
+│   │   └── final_classified_apps.csv  # ← Generated by mock
+│   └── batch_status.json            # ← Generated by mock
+├── pubspec.yaml
+└── SETUP_GUIDE.md
+```
+
+## Next Level Testing
+
+### Unit Tests
+
+```bash
+flutter test
+```
+
+### Widget Tests
+
+```bash
+flutter test test/widgets/
+```
+
+### Integration Tests
+
+```bash
+flutter drive --target=test_driver/app.dart
+```
+
+### Performance Profiling
+
+```bash
+flutter run --profile
+# Press 'p' in run terminal for performance overlay
+```
+
+## Common Test Scenarios
+
+### Scenario 1: Fast Processing
+
+```bash
+# Edit mock_orchestrator.py, change all stage_times to 0.5
+python backend/mock_orchestrator.py --store=google_play --keywords=fitness --countries=US,UK
+```
+
+### Scenario 2: Multiple Countries
+
+```bash
+python backend/mock_orchestrator.py --countries=US,UK,DE,FR,JP
+```
+
+### Scenario 3: Both Stores
+
+```bash
+python backend/mock_orchestrator.py --store=both --keywords=yoga
+```
+
+## Tips & Tricks
+
+1. **Hot Reload**: Press `r` in Flutter terminal for instant UI changes
+2. **Hot Restart**: Press `R` for full app restart (keeps backend running)
+3. **Debug Logs**: Check Flutter terminal for `[Tag] Message` debug prints
+4. **Performance**: Press `p` in Flutter terminal to show performance overlay
+5. **Accessibility**: Press `a` for accessibility inspector
+
+## Support
+
+- **Flutter Docs**: https://flutter.dev
+- **Pub.dev Packages**: https://pub.dev
+- **Issue Tracking**: Check project's GitHub Issues
+
+---
+
+**You're ready to test!** 🚀
+
+Start with Terminal 1 (backend) then Terminal 2 (flutter), then navigate the UI tabs.
