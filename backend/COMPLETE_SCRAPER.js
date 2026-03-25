@@ -1,11 +1,8 @@
 import store from "app-store-scraper";
 import gplay from "google-play-scraper";
 import fs from "fs/promises";
-import { countriesEssential, TESTcountries } from "./countries_essential.js";
-import {
-  searchQueriesEssential,
-  TESTSearchQueries,
-} from "./searchQueries_essential.js";
+import { countriesEssential } from "./lists/countries_essential.js";
+import { searchQueriesEssential } from "./lists/searchQueries_essential.js";
 
 // Test configuration - minimal setup for quick testing
 const searchQueries = searchQueriesEssential;
@@ -72,7 +69,7 @@ async function getAppStoreApps() {
 
       for (const category of targetCategories) {
         const categoryName = Object.keys(store.category).find(
-          (key) => store.category[key] === category
+          (key) => store.category[key] === category,
         );
         logToFile(`\n📱 APP STORE Processing ${categoryName} category...`);
 
@@ -80,7 +77,7 @@ async function getAppStoreApps() {
         for (const collection of collections) {
           try {
             const collectionName = Object.keys(store.collection).find(
-              (key) => store.collection[key] === collection
+              (key) => store.collection[key] === collection,
             );
             logToFile(`  📋 APP STORE Fetching from ${collectionName}...`);
 
@@ -111,12 +108,12 @@ async function getAppStoreApps() {
             });
 
             logToFile(
-              `    ✅ APP STORE Added ${newAppsCount} new apps from ${collectionName}`
+              `    ✅ APP STORE Added ${newAppsCount} new apps from ${collectionName}`,
             );
             await new Promise((resolve) => setTimeout(resolve, 500));
           } catch (error) {
             logToFile(
-              `    ⚠️ APP STORE Failed to fetch from ${collection}: ${error.message}`
+              `    ⚠️ APP STORE Failed to fetch from ${collection}: ${error.message}`,
             );
           }
         }
@@ -126,13 +123,13 @@ async function getAppStoreApps() {
       logToFile(
         `  🔍 APP STORE Searching with ${
           searchQueries.length
-        } terms in ${country.toUpperCase()}...`
+        } terms in ${country.toUpperCase()}...`,
       );
 
       for (const query of searchQueries) {
         try {
           logToFile(
-            ` APP STORE Searching: "${query}" in ${country.toUpperCase()}`
+            ` APP STORE Searching: "${query}" in ${country.toUpperCase()}`,
           );
           const searchApps = await store.search({
             term: query,
@@ -143,7 +140,7 @@ async function getAppStoreApps() {
 
           // Log total results found
           logToFile(
-            `      📊 APP STORE Found ${searchApps.length} total results for "${query}"`
+            `      📊 APP STORE Found ${searchApps.length} total results for "${query}"`,
           );
 
           // Log genre distribution for debugging
@@ -153,7 +150,7 @@ async function getAppStoreApps() {
             genreCount[genre] = (genreCount[genre] || 0) + 1;
           });
           logToFile(
-            `      🏷️  APP STORE Genres found: ${JSON.stringify(genreCount)}`
+            `      🏷️  APP STORE Genres found: ${JSON.stringify(genreCount)}`,
           );
 
           // Filter search results to only include SPORTS or HEALTH_AND_FITNESS category apps
@@ -178,11 +175,11 @@ async function getAppStoreApps() {
               logToFile(
                 `      🚫 APP STORE Filtered out: "${app.title}" (Genre: ${
                   app.primaryGenre
-                }, IDs: ${JSON.stringify(appGenreID)})`
+                }, IDs: ${JSON.stringify(appGenreID)})`,
               );
             } else {
               logToFile(
-                `      ✅ APP STORE Keeping: "${app.title}" (Genre: ${app.primaryGenre})`
+                `      ✅ APP STORE Keeping: "${app.title}" (Genre: ${app.primaryGenre})`,
               );
             }
 
@@ -193,7 +190,7 @@ async function getAppStoreApps() {
             searchApps.length - filteredSearchApps.length;
           if (filteredOutCount > 0) {
             logToFile(
-              `      🔍 APP STORE Filtered out ${filteredOutCount} non-sports/fitness apps`
+              `      🔍 APP STORE Filtered out ${filteredOutCount} non-sports/fitness apps`,
             );
           }
 
@@ -217,7 +214,7 @@ async function getAppStoreApps() {
 
           if (newSearchAppsCount > 0) {
             logToFile(
-              `      ✅ APP STORE Added ${newSearchAppsCount} new apps from "${query}" in ${country.toUpperCase()}`
+              `      ✅ APP STORE Added ${newSearchAppsCount} new apps from "${query}" in ${country.toUpperCase()}`,
             );
           }
 
@@ -226,7 +223,7 @@ async function getAppStoreApps() {
           logToFile(
             `      ⚠️ APP STORE Search failed for "${query}" in ${country.toUpperCase()}: ${
               searchError.message
-            }`
+            }`,
           );
         }
       }
@@ -234,12 +231,12 @@ async function getAppStoreApps() {
       logToFile(
         `🏁 APP STORE Completed ${country.toUpperCase()}: Total apps collected so far: ${
           allApps.length
-        }`
+        }`,
       );
     }
 
     logToFile(
-      `\n🎯 Apple App Store collection completed: ${allApps.length} apps`
+      `\n🎯 Apple App Store collection completed: ${allApps.length} apps`,
     );
     return allApps;
   } catch (error) {
@@ -276,7 +273,7 @@ async function getGooglePlayApps() {
     // Process each country
     for (const country of targetCountries) {
       logToFile(
-        `\n🌍 Processing Google Play Store in: ${country.toUpperCase()}`
+        `\n🌍 Processing Google Play Store in: ${country.toUpperCase()}`,
       );
 
       for (const category of targetCategories) {
@@ -314,12 +311,12 @@ async function getGooglePlayApps() {
             });
 
             logToFile(
-              `    ✅ PLAY STORE Added ${newAppsCount} new apps from ${collection}`
+              `    ✅ PLAY STORE Added ${newAppsCount} new apps from ${collection}`,
             );
             await new Promise((resolve) => setTimeout(resolve, 500));
           } catch (error) {
             logToFile(
-              `    ⚠️ PLAY STORE Failed to fetch from ${collection}: ${error.message}`
+              `    ⚠️ PLAY STORE Failed to fetch from ${collection}: ${error.message}`,
             );
           }
         }
@@ -329,13 +326,13 @@ async function getGooglePlayApps() {
       logToFile(
         `  🔍 PLAY STORE Searching with ${
           searchQueries.length
-        } search terms in ${country.toUpperCase()}...`
+        } search terms in ${country.toUpperCase()}...`,
       );
 
       for (const query of searchQueries) {
         try {
           logToFile(
-            `PLAYSTORE    Searching: "${query}" in ${country.toUpperCase()}`
+            `PLAYSTORE    Searching: "${query}" in ${country.toUpperCase()}`,
           );
           const searchApps = await gplay.search({
             term: query,
@@ -346,7 +343,7 @@ async function getGooglePlayApps() {
 
           // Log total results found
           logToFile(
-            `      📊 PLAY STORE Found ${searchApps.length} total results for "${query}"`
+            `      📊 PLAY STORE Found ${searchApps.length} total results for "${query}"`,
           );
 
           // Log genre distribution for debugging
@@ -369,8 +366,8 @@ async function getGooglePlayApps() {
                   categories: sampleApp.categories,
                 },
                 null,
-                2
-              )}`
+                2,
+              )}`,
             );
           }
 
@@ -392,11 +389,11 @@ async function getGooglePlayApps() {
             // Log filtered apps for debugging
             if (!isValidCategory) {
               logToFile(
-                `      🚫 PLAY STORE Filtered out (wrong genre): "${app.title}" (Genre: ${appGenre})`
+                `      🚫 PLAY STORE Filtered out (wrong genre): "${app.title}" (Genre: ${appGenre})`,
               );
             } else {
               logToFile(
-                `      ✅ PLAY STORE Keeping: "${app.title}" (Genre: ${appGenre})`
+                `      ✅ PLAY STORE Keeping: "${app.title}" (Genre: ${appGenre})`,
               );
             }
 
@@ -407,7 +404,7 @@ async function getGooglePlayApps() {
             searchApps.length - filteredSearchApps.length;
           if (filteredOutCount > 0) {
             logToFile(
-              `      🔍 PLAY STORE Filtered out ${filteredOutCount} non-sports/fitness apps`
+              `      🔍 PLAY STORE Filtered out ${filteredOutCount} non-sports/fitness apps`,
             );
           }
 
@@ -431,7 +428,7 @@ async function getGooglePlayApps() {
 
           if (newSearchAppsCount > 0) {
             logToFile(
-              `      ✅ PLAY STORE Added ${newSearchAppsCount} new apps from "${query}" in ${country.toUpperCase()}`
+              `      ✅ PLAY STORE Added ${newSearchAppsCount} new apps from "${query}" in ${country.toUpperCase()}`,
             );
           }
 
@@ -440,7 +437,7 @@ async function getGooglePlayApps() {
           logToFile(
             `      ⚠️ PLAY STORE Search failed for "${query}" in ${country.toUpperCase()}: ${
               searchError.message
-            }`
+            }`,
           );
         }
       }
@@ -448,7 +445,7 @@ async function getGooglePlayApps() {
       logToFile(
         `🏁 PLAY STORE Completed ${country.toUpperCase()}: Total apps collected so far: ${
           allApps.length
-        }`
+        }`,
       );
     }
 
@@ -764,7 +761,7 @@ function combineAndDeduplicateApps(appStoreApps, googlePlayApps) {
       existingApp.crossPlatformMethod = "appId";
 
       logToFile(
-        `   🔄 Cross-platform app found (appId): "${existingApp.title}" (${existingApp.appId})`
+        `   🔄 Cross-platform app found (appId): "${existingApp.title}" (${existingApp.appId})`,
       );
     } else {
       // Check for title similarity (exact match for now, could be enhanced with fuzzy matching)
@@ -772,7 +769,7 @@ function combineAndDeduplicateApps(appStoreApps, googlePlayApps) {
         (app) =>
           app.title &&
           playApp.title &&
-          app.title.trim().toLowerCase() === playApp.title.trim().toLowerCase()
+          app.title.trim().toLowerCase() === playApp.title.trim().toLowerCase(),
       );
 
       if (existingApp) {
@@ -795,10 +792,10 @@ function combineAndDeduplicateApps(appStoreApps, googlePlayApps) {
         existingApp.crossPlatformAppIds.push(playApp.appId);
 
         logToFile(
-          `   🔄 Cross-platform app found (title): "${existingApp.title}"`
+          `   🔄 Cross-platform app found (title): "${existingApp.title}"`,
         );
         logToFile(
-          `     📱 Apple: ${existingApp.appId} | 🤖 Google: ${playApp.appId}`
+          `     📱 Apple: ${existingApp.appId} | 🤖 Google: ${playApp.appId}`,
         );
       } else {
         // New app from Google Play
@@ -826,7 +823,7 @@ function combineAndDeduplicateApps(appStoreApps, googlePlayApps) {
   logToFile(
     `   🔄 Total cross-platform apps: ${
       duplicatesFoundByAppId + duplicatesFoundByTitle
-    }`
+    }`,
   );
   logToFile(`   ➕ New apps added from Google Play: ${newAppsAdded}`);
   logToFile(`   🎯 Total unique apps: ${allApps.length}`);
@@ -910,7 +907,7 @@ function printCombinedSummary(apps) {
     100
   ).toFixed(1);
   logToFile(
-    `  📊 Cross-platform coverage: ${crossPlatformPercentage}% of apps`
+    `  📊 Cross-platform coverage: ${crossPlatformPercentage}% of apps`,
   );
 
   logToFile("\nCross-Platform Detection Methods:");
@@ -919,7 +916,7 @@ function printCombinedSummary(apps) {
   logToFile(
     `  🎯 Total detected: ${
       crossPlatformMethods.appId + crossPlatformMethods.title
-    } apps`
+    } apps`,
   );
 
   logToFile("\nBy Category:");
@@ -1309,7 +1306,7 @@ async function main() {
 
     if (appStoreApps.length === 0 && googlePlayApps.length === 0) {
       logToFile(
-        "❌ No apps were collected from either platform. Check your internet connection and try again."
+        "❌ No apps were collected from either platform. Check your internet connection and try again.",
       );
       await saveLogFile();
       return;
@@ -1318,7 +1315,7 @@ async function main() {
     // Combine and deduplicate
     const combinedApps = combineAndDeduplicateApps(
       appStoreApps,
-      googlePlayApps
+      googlePlayApps,
     );
 
     if (combinedApps.length > 0) {
@@ -1359,7 +1356,7 @@ async function main() {
       logToFile(`  - ${jsonFilename} (Combined JSON)`);
       logToFile(`  - ${csvFilename} (Combined CSV)`);
       logToFile(
-        `\n🎯 Summary: Collected ${combinedApps.length} unique sports & fitness apps from both platforms`
+        `\n🎯 Summary: Collected ${combinedApps.length} unique sports & fitness apps from both platforms`,
       );
 
       // Calculate and display actual time taken
@@ -1375,7 +1372,7 @@ async function main() {
       logToFile(`\n⏱️  ACTUAL TIME TAKEN:`);
       logToFile(`   🏁 Finished at: ${endTimeFormatted}`);
       logToFile(
-        `   ⌛ Total duration: ${actualDurationHours}h ${remainingMinutes}m ${remainingSeconds}s`
+        `   ⌛ Total duration: ${actualDurationHours}h ${remainingMinutes}m ${remainingSeconds}s`,
       );
       logToFile(`   📊 Performance: ${actualDurationMs}ms total`);
 
