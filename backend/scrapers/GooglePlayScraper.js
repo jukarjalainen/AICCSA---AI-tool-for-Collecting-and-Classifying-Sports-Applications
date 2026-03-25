@@ -5,10 +5,11 @@
 import gplay from "google-play-scraper";
 
 export class GooglePlayScraper {
-  constructor({ countries, searchQueries, logToFile }) {
+  constructor({ countries, searchQueries, logToFile, includeTopCollections }) {
     this.countries = countries;
     this.searchQueries = searchQueries;
     this.logToFile = logToFile;
+    this.includeTopCollections = includeTopCollections;
   }
 
   async scrape() {
@@ -25,8 +26,9 @@ export class GooglePlayScraper {
         gplay.collection.TOP_FREE,
         gplay.collection.TOP_PAID,
       ];
-      const totalCollectionCalls =
-        targetCountries.length * targetCategories.length * collections.length;
+      const totalCollectionCalls = this.includeTopCollections
+        ? targetCountries.length * targetCategories.length * collections.length
+        : 0;
       const totalSearchCalls =
         targetCountries.length * this.searchQueries.length;
       const totalAPICalls = totalCollectionCalls + totalSearchCalls;
@@ -45,6 +47,10 @@ export class GooglePlayScraper {
 
         for (const category of targetCategories) {
           logToFile(`\n📱 PLAY STORE Processing ${category} category...`);
+
+          if (!this.includeTopCollections) {
+            continue;
+          }
 
           // Step 1: Get apps from collections
           for (const collection of collections) {

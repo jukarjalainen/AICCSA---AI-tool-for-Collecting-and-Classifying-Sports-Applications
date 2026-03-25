@@ -6,9 +6,10 @@ class AppStateProvider with ChangeNotifier {
   AppConfiguration _configuration = AppConfiguration(
     targetStore: 'google_play',
     keywords: '',
+    useEssentialQueries: false,
     countries: ['US'],
     searchTopCollections: false,
-    llmModel: 'gpt-4',
+    llmModel: 'gpt-5-mini',
   );
 
   ProcessProgress _progress = ProcessProgress();
@@ -72,15 +73,17 @@ class AppStateProvider with ChangeNotifier {
       final prefs = await SharedPreferences.getInstance();
       final targetStore = prefs.getString('targetStore') ?? 'google_play';
       final keywords = prefs.getString('keywords') ?? '';
+      final useEssentialQueries = prefs.getBool('useEssentialQueries') ?? false;
       final countries = prefs.getStringList('countries') ?? ['US'];
       final collection = prefs.getString('collection');
       final searchTopCollections =
           prefs.getBool('searchTopCollections') ?? false;
-      final llmModel = prefs.getString('llmModel') ?? 'gpt-4';
+      final llmModel = prefs.getString('llmModel') ?? 'gpt-5-mini';
 
       _configuration = AppConfiguration(
         targetStore: targetStore,
         keywords: keywords,
+        useEssentialQueries: useEssentialQueries,
         countries: countries,
         collection: collection,
         searchTopCollections: searchTopCollections,
@@ -101,6 +104,7 @@ class AppStateProvider with ChangeNotifier {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('targetStore', config.targetStore);
       await prefs.setString('keywords', config.keywords);
+      await prefs.setBool('useEssentialQueries', config.useEssentialQueries);
       await prefs.setStringList('countries', config.countries);
       if (config.collection != null) {
         await prefs.setString('collection', config.collection!);
@@ -141,6 +145,11 @@ class AppStateProvider with ChangeNotifier {
   // Update keywords
   void setKeywords(String keywords) {
     _configuration = _configuration.copyWith(keywords: keywords);
+    notifyListeners();
+  }
+
+  void setUseEssentialQueries(bool enabled) {
+    _configuration = _configuration.copyWith(useEssentialQueries: enabled);
     notifyListeners();
   }
 
@@ -211,9 +220,10 @@ class AppStateProvider with ChangeNotifier {
     _configuration = AppConfiguration(
       targetStore: 'google_play',
       keywords: '',
+      useEssentialQueries: false,
       countries: ['US'],
       searchTopCollections: false,
-      llmModel: 'gpt-4',
+      llmModel: 'gpt-5-mini',
     );
     _progress = ProcessProgress();
     _apiKey = null;

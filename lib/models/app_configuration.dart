@@ -1,6 +1,7 @@
 class AppConfiguration {
   final String targetStore; // 'google_play' or 'app_store' or 'both'
   final String keywords; // Single keyword or path to .txt file
+  final bool useEssentialQueries;
   final List<String> countries;
   final String? collection; // For App Store specific collections
   final bool searchTopCollections;
@@ -10,16 +11,18 @@ class AppConfiguration {
   AppConfiguration({
     required this.targetStore,
     required this.keywords,
+    this.useEssentialQueries = false,
     required this.countries,
     this.collection,
     this.searchTopCollections = false,
-    this.llmModel = 'gpt-4',
+    this.llmModel = 'gpt-5-mini',
     this.useCustomApi = false,
   });
 
   AppConfiguration copyWith({
     String? targetStore,
     String? keywords,
+    bool? useEssentialQueries,
     List<String>? countries,
     String? collection,
     bool? searchTopCollections,
@@ -29,6 +32,7 @@ class AppConfiguration {
     return AppConfiguration(
       targetStore: targetStore ?? this.targetStore,
       keywords: keywords ?? this.keywords,
+      useEssentialQueries: useEssentialQueries ?? this.useEssentialQueries,
       countries: countries ?? this.countries,
       collection: collection ?? this.collection,
       searchTopCollections: searchTopCollections ?? this.searchTopCollections,

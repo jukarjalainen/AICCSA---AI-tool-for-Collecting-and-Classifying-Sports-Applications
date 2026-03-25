@@ -124,6 +124,7 @@ class _ConfigurationFormState extends State<ConfigurationForm> {
                   Expanded(
                     child: TextField(
                       controller: _keywordsController,
+                      enabled: !appState.configuration.useEssentialQueries,
                       decoration: InputDecoration(
                         hintText:
                             'Enter keywords (comma-separated) or select a file',
@@ -142,7 +143,9 @@ class _ConfigurationFormState extends State<ConfigurationForm> {
                   ),
                   const SizedBox(width: 8),
                   ElevatedButton.icon(
-                    onPressed: _pickKeywordsFile,
+                    onPressed: appState.configuration.useEssentialQueries
+                        ? null
+                        : _pickKeywordsFile,
                     icon: const Icon(Icons.folder_open),
                     label: const Text('Browse'),
                     style: ElevatedButton.styleFrom(
@@ -153,6 +156,16 @@ class _ConfigurationFormState extends State<ConfigurationForm> {
                     ),
                   ),
                 ],
+              ),
+              CheckboxListTile(
+                contentPadding: EdgeInsets.zero,
+                dense: true,
+                title: const Text('Use essential keyword list'),
+                subtitle: const Text('Use backend searchQueries_essential.js'),
+                value: appState.configuration.useEssentialQueries,
+                onChanged: (value) {
+                  appState.setUseEssentialQueries(value ?? false);
+                },
               ),
               const SizedBox(height: 24),
 
@@ -295,6 +308,10 @@ class _ConfigurationFormState extends State<ConfigurationForm> {
                   ),
                 ),
                 items: const [
+                  DropdownMenuItem(
+                    value: 'gpt-5-mini',
+                    child: Text('GPT-5 Mini'),
+                  ),
                   DropdownMenuItem(value: 'gpt-4', child: Text('GPT-4')),
                   DropdownMenuItem(
                     value: 'gpt-4-turbo',

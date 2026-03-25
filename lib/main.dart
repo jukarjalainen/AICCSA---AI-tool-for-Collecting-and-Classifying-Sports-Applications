@@ -69,7 +69,7 @@ class _HomePageState extends State<HomePage> {
       return;
     }
 
-    if (config.keywords.isEmpty) {
+    if (!config.useEssentialQueries && config.keywords.isEmpty) {
       _showErrorSnackBar('Please enter keywords or select a file');
       return;
     }
@@ -98,6 +98,7 @@ class _HomePageState extends State<HomePage> {
       _currentProcess = await ProcessService.startProcessing(
         targetStore: config.targetStore,
         keywords: config.keywords,
+        useEssentialQueries: config.useEssentialQueries,
         countries: config.countries,
         llmModel: config.llmModel,
         searchTopCollections: config.searchTopCollections,
@@ -219,7 +220,9 @@ class _HomePageState extends State<HomePage> {
       builder: (context, appState, _) {
         return Scaffold(
           appBar: AppBar(
-            title: const Text('AICCSA - AI tool for collecting and classifying sports applications'),
+            title: const Text(
+              'AICCSA - AI tool for collecting and classifying sports applications',
+            ),
             elevation: 2,
           ),
           body: IndexedStack(

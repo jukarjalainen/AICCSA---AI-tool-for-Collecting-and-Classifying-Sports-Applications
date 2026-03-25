@@ -5,10 +5,11 @@
 import store from "app-store-scraper";
 
 export class AppStoreScraper {
-  constructor({ countries, searchQueries, logToFile }) {
+  constructor({ countries, searchQueries, logToFile, includeTopCollections }) {
     this.countries = countries;
     this.searchQueries = searchQueries;
     this.logToFile = logToFile;
+    this.includeTopCollections = includeTopCollections;
   }
 
   async scrape() {
@@ -33,8 +34,9 @@ export class AppStoreScraper {
         store.collection.TOP_GROSSING_IPAD,
       ];
 
-      const totalCollectionCalls =
-        targetCountries.length * targetCategories.length * collections.length;
+      const totalCollectionCalls = this.includeTopCollections
+        ? targetCountries.length * targetCategories.length * collections.length
+        : 0;
       const totalSearchCalls =
         targetCountries.length * this.searchQueries.length;
       const totalAPICalls = totalCollectionCalls + totalSearchCalls;
@@ -52,6 +54,10 @@ export class AppStoreScraper {
             (key) => store.category[key] === category,
           );
           logToFile(`\n📱 APP STORE Processing ${categoryName} category...`);
+
+          if (!this.includeTopCollections) {
+            continue;
+          }
 
           // Step 1: Get apps from collections
           for (const collection of collections) {
