@@ -1,4 +1,9 @@
 /**
+ * Countries configuration list module.
+ * Provides essential country codes used by scraper classes for per-country scraping.
+ */
+
+/**
  * Essential country codes for app store scraping - Major markets only
  * Reduced list for faster scraping while maintaining good coverage
  */

@@ -1,3 +1,7 @@
+/**
+ * Google Play scraper class.
+ * Collects sports and health/fitness apps from top lists and search terms per country.
+ */
 import gplay from "google-play-scraper";
 
 export class GooglePlayScraper {

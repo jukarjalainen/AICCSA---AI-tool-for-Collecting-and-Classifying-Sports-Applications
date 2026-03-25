@@ -1,3 +1,7 @@
+/**
+ * Apple App Store scraper class.
+ * Collects sports and health/fitness apps from top collections and search terms per country.
+ */
 import store from "app-store-scraper";
 
 export class AppStoreScraper {
