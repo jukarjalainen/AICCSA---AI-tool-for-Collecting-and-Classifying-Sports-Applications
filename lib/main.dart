@@ -64,6 +64,11 @@ class _HomePageState extends State<HomePage> {
     final config = appState.configuration;
 
     // Validate configuration
+    if (config.targetStore.isEmpty) {
+      _showErrorSnackBar('Please select at least one target store');
+      return;
+    }
+
     if (config.keywords.isEmpty) {
       _showErrorSnackBar('Please enter keywords or select a file');
       return;
@@ -95,8 +100,7 @@ class _HomePageState extends State<HomePage> {
         keywords: config.keywords,
         countries: config.countries,
         llmModel: config.llmModel,
-        searchGooglePlayTopLists: config.searchGooglePlayTopLists,
-        topCollectionGenre: config.topCollectionGenre,
+        searchTopCollections: config.searchTopCollections,
         apiKey: appState.apiKey,
       );
 
@@ -215,7 +219,7 @@ class _HomePageState extends State<HomePage> {
       builder: (context, appState, _) {
         return Scaffold(
           appBar: AppBar(
-            title: const Text('AICCSA - App Intelligence & Classification'),
+            title: const Text('AICCSA - AI tool for collecting and classifying sports applications'),
             elevation: 2,
           ),
           body: IndexedStack(

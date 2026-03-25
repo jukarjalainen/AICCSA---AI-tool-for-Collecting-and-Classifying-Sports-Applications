@@ -89,13 +89,27 @@ class _ConfigurationFormState extends State<ConfigurationForm> {
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
               ),
               const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                children: [
-                  _buildStoreButton('google_play', 'Google Play', appState),
-                  _buildStoreButton('app_store', 'Apple App Store', appState),
-                  _buildStoreButton('both', 'Both', appState),
-                ],
+              CheckboxListTile(
+                contentPadding: EdgeInsets.zero,
+                dense: true,
+                title: const Text('Google Play'),
+                value:
+                    appState.configuration.targetStore == 'google_play' ||
+                    appState.configuration.targetStore == 'both',
+                onChanged: (value) {
+                  appState.setGooglePlayEnabled(value ?? false);
+                },
+              ),
+              CheckboxListTile(
+                contentPadding: EdgeInsets.zero,
+                dense: true,
+                title: const Text('Apple App Store'),
+                value:
+                    appState.configuration.targetStore == 'app_store' ||
+                    appState.configuration.targetStore == 'both',
+                onChanged: (value) {
+                  appState.setAppStoreEnabled(value ?? false);
+                },
               ),
               const SizedBox(height: 24),
 
@@ -250,43 +264,15 @@ class _ConfigurationFormState extends State<ConfigurationForm> {
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
               ),
               const SizedBox(height: 8),
-              const Text(
-                'All available collections are always searched for both stores.',
-                style: TextStyle(fontSize: 12, color: Colors.black54),
-              ),
-              const SizedBox(height: 8),
-              SwitchListTile(
+              CheckboxListTile(
                 contentPadding: EdgeInsets.zero,
-                title: const Text('Search Google Play top lists'),
-                value: appState.configuration.searchGooglePlayTopLists,
-                onChanged: (value) {
-                  appState.setSearchGooglePlayTopLists(value);
-                },
-              ),
-              const SizedBox(height: 8),
-              DropdownButtonFormField<String>(
-                initialValue: appState.configuration.topCollectionGenre,
-                decoration: InputDecoration(
-                  labelText: 'Top collection genre',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 12,
-                  ),
+                title: const Text('Search top collections'),
+                subtitle: const Text(
+                  'Search all top collections in SPORTS and HEALTH_AND_FITNESS for selected stores only.',
                 ),
-                items: const [
-                  DropdownMenuItem(value: 'SPORTS', child: Text('SPORTS')),
-                  DropdownMenuItem(
-                    value: 'HEALTH_AND_FITNESS',
-                    child: Text('HEALTH_AND_FITNESS'),
-                  ),
-                ],
+                value: appState.configuration.searchTopCollections,
                 onChanged: (value) {
-                  if (value != null) {
-                    appState.setTopCollectionGenre(value);
-                  }
+                  appState.setSearchTopCollections(value ?? false);
                 },
               ),
               const SizedBox(height: 24),
@@ -409,26 +395,6 @@ class _ConfigurationFormState extends State<ConfigurationForm> {
           ),
         );
       },
-    );
-  }
-
-  Widget _buildStoreButton(
-    String value,
-    String label,
-    AppStateProvider appState,
-  ) {
-    final isSelected = appState.configuration.targetStore == value;
-    return ElevatedButton(
-      onPressed: () {
-        appState.setTargetStore(value);
-      },
-      style: ElevatedButton.styleFrom(
-        backgroundColor: isSelected
-            ? Theme.of(context).primaryColor
-            : Colors.grey.shade300,
-        foregroundColor: isSelected ? Colors.white : Colors.black,
-      ),
-      child: Text(label),
     );
   }
 

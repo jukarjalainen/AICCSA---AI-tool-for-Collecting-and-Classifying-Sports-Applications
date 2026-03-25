@@ -11,8 +11,7 @@ class ProcessService {
     required String keywords,
     required List<String> countries,
     required String llmModel,
-    required bool searchGooglePlayTopLists,
-    required String topCollectionGenre,
+    required bool searchTopCollections,
     String? apiKey,
   }) async {
     try {
@@ -22,9 +21,11 @@ class ProcessService {
         '--keywords=$keywords',
         '--countries=${countries.join(",")}',
         '--model=$llmModel',
-        '--all-collections=true',
-        '--google-play-top-lists=$searchGooglePlayTopLists',
-        '--top-collection-genre=$topCollectionGenre',
+        '--search-top-collections=$searchTopCollections',
+        if (searchTopCollections) '--all-collections=true',
+        if (searchTopCollections) '--top-collection-stores=$targetStore',
+        if (searchTopCollections)
+          '--top-collection-categories=SPORTS,HEALTH_AND_FITNESS',
         if (apiKey != null) '--api-key=$apiKey',
       ];
 
