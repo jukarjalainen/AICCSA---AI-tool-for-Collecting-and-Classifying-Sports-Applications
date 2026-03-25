@@ -7,6 +7,7 @@ class AppStateProvider with ChangeNotifier {
     targetStore: 'google_play',
     keywords: '',
     countries: ['US'],
+    searchTopCollections: false,
     llmModel: 'gpt-4',
   );
 
@@ -73,6 +74,8 @@ class AppStateProvider with ChangeNotifier {
       final keywords = prefs.getString('keywords') ?? '';
       final countries = prefs.getStringList('countries') ?? ['US'];
       final collection = prefs.getString('collection');
+      final searchTopCollections =
+          prefs.getBool('searchTopCollections') ?? false;
       final llmModel = prefs.getString('llmModel') ?? 'gpt-4';
 
       _configuration = AppConfiguration(
@@ -80,6 +83,7 @@ class AppStateProvider with ChangeNotifier {
         keywords: keywords,
         countries: countries,
         collection: collection,
+        searchTopCollections: searchTopCollections,
         llmModel: llmModel,
       );
       notifyListeners();
@@ -101,6 +105,7 @@ class AppStateProvider with ChangeNotifier {
       if (config.collection != null) {
         await prefs.setString('collection', config.collection!);
       }
+      await prefs.setBool('searchTopCollections', config.searchTopCollections);
       await prefs.setString('llmModel', config.llmModel);
     } catch (e) {
       debugPrint('Error saving configuration: $e');
@@ -112,6 +117,24 @@ class AppStateProvider with ChangeNotifier {
   // Update target store
   void setTargetStore(String store) {
     _configuration = _configuration.copyWith(targetStore: store);
+    notifyListeners();
+  }
+
+  void setGooglePlayEnabled(bool enabled) {
+    final isAppStoreEnabled =
+        _configuration.targetStore == 'app_store' ||
+        _configuration.targetStore == 'both';
+    final targetStore = _resolveTargetStore(enabled, isAppStoreEnabled);
+    _configuration = _configuration.copyWith(targetStore: targetStore);
+    notifyListeners();
+  }
+
+  void setAppStoreEnabled(bool enabled) {
+    final isGooglePlayEnabled =
+        _configuration.targetStore == 'google_play' ||
+        _configuration.targetStore == 'both';
+    final targetStore = _resolveTargetStore(isGooglePlayEnabled, enabled);
+    _configuration = _configuration.copyWith(targetStore: targetStore);
     notifyListeners();
   }
 
@@ -130,6 +153,11 @@ class AppStateProvider with ChangeNotifier {
   // Update collection
   void setCollection(String? collection) {
     _configuration = _configuration.copyWith(collection: collection);
+    notifyListeners();
+  }
+
+  void setSearchTopCollections(bool enabled) {
+    _configuration = _configuration.copyWith(searchTopCollections: enabled);
     notifyListeners();
   }
 
@@ -184,10 +212,18 @@ class AppStateProvider with ChangeNotifier {
       targetStore: 'google_play',
       keywords: '',
       countries: ['US'],
+      searchTopCollections: false,
       llmModel: 'gpt-4',
     );
     _progress = ProcessProgress();
     _apiKey = null;
     notifyListeners();
+  }
+
+  String _resolveTargetStore(bool googlePlayEnabled, bool appStoreEnabled) {
+    if (googlePlayEnabled && appStoreEnabled) return 'both';
+    if (googlePlayEnabled) return 'google_play';
+    if (appStoreEnabled) return 'app_store';
+    return '';
   }
 }

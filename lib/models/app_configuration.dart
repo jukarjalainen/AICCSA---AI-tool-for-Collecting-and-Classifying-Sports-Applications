@@ -3,6 +3,7 @@ class AppConfiguration {
   final String keywords; // Single keyword or path to .txt file
   final List<String> countries;
   final String? collection; // For App Store specific collections
+  final bool searchTopCollections;
   final String llmModel;
   final bool useCustomApi;
 
@@ -11,6 +12,7 @@ class AppConfiguration {
     required this.keywords,
     required this.countries,
     this.collection,
+    this.searchTopCollections = false,
     this.llmModel = 'gpt-4',
     this.useCustomApi = false,
   });
@@ -20,6 +22,7 @@ class AppConfiguration {
     String? keywords,
     List<String>? countries,
     String? collection,
+    bool? searchTopCollections,
     String? llmModel,
     bool? useCustomApi,
   }) {
@@ -28,6 +31,7 @@ class AppConfiguration {
       keywords: keywords ?? this.keywords,
       countries: countries ?? this.countries,
       collection: collection ?? this.collection,
+      searchTopCollections: searchTopCollections ?? this.searchTopCollections,
       llmModel: llmModel ?? this.llmModel,
       useCustomApi: useCustomApi ?? this.useCustomApi,
     );

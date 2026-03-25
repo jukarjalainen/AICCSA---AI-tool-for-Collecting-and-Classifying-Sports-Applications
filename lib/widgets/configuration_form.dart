@@ -8,8 +8,7 @@ import '../services/secure_storage_service.dart';
 class ConfigurationForm extends StatefulWidget {
   final Function(AppConfiguration) onConfigurationChanged;
 
-  const ConfigurationForm({Key? key, required this.onConfigurationChanged})
-    : super(key: key);
+  const ConfigurationForm({super.key, required this.onConfigurationChanged});
 
   @override
   State<ConfigurationForm> createState() => _ConfigurationFormState();
@@ -20,6 +19,7 @@ class _ConfigurationFormState extends State<ConfigurationForm> {
   late TextEditingController _apiKeyController;
   String? _selectedFile;
   bool _showApiKey = false;
+  bool _showCountriesDropdown = false;
 
   @override
   void initState() {
@@ -89,13 +89,27 @@ class _ConfigurationFormState extends State<ConfigurationForm> {
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
               ),
               const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                children: [
-                  _buildStoreButton('google_play', 'Google Play', appState),
-                  _buildStoreButton('app_store', 'Apple App Store', appState),
-                  _buildStoreButton('both', 'Both', appState),
-                ],
+              CheckboxListTile(
+                contentPadding: EdgeInsets.zero,
+                dense: true,
+                title: const Text('Google Play'),
+                value:
+                    appState.configuration.targetStore == 'google_play' ||
+                    appState.configuration.targetStore == 'both',
+                onChanged: (value) {
+                  appState.setGooglePlayEnabled(value ?? false);
+                },
+              ),
+              CheckboxListTile(
+                contentPadding: EdgeInsets.zero,
+                dense: true,
+                title: const Text('Apple App Store'),
+                value:
+                    appState.configuration.targetStore == 'app_store' ||
+                    appState.configuration.targetStore == 'both',
+                onChanged: (value) {
+                  appState.setAppStoreEnabled(value ?? false);
+                },
               ),
               const SizedBox(height: 24),
 
@@ -148,65 +162,120 @@ class _ConfigurationFormState extends State<ConfigurationForm> {
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
               ),
               const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: appState.availableCountries.map((country) {
-                  final isSelected = appState.configuration.countries.contains(
-                    country,
-                  );
-                  return FilterChip(
-                    label: Text(country),
-                    selected: isSelected,
-                    onSelected: (selected) {
-                      final countries = List<String>.from(
-                        appState.configuration.countries,
-                      );
-                      if (selected) {
-                        countries.add(country);
-                      } else {
-                        countries.remove(country);
-                      }
-                      appState.setCountries(countries);
-                    },
-                  );
-                }).toList(),
+              InkWell(
+                borderRadius: BorderRadius.circular(8),
+                onTap: () {
+                  setState(() {
+                    _showCountriesDropdown = !_showCountriesDropdown;
+                  });
+                },
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 12,
+                  ),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.grey.shade400),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          _buildCountriesSummary(
+                            appState.configuration.countries,
+                            appState.availableCountries.length,
+                          ),
+                        ),
+                      ),
+                      Icon(
+                        _showCountriesDropdown
+                            ? Icons.keyboard_arrow_up
+                            : Icons.keyboard_arrow_down,
+                      ),
+                    ],
+                  ),
+                ),
               ),
+              if (_showCountriesDropdown) ...[
+                const SizedBox(height: 8),
+                Container(
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.grey.shade300),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Column(
+                    children: [
+                      CheckboxListTile(
+                        dense: true,
+                        title: const Text('Select all countries'),
+                        value:
+                            appState.configuration.countries.length ==
+                            appState.availableCountries.length,
+                        onChanged: (selected) {
+                          if (selected == true) {
+                            appState.setCountries(
+                              List<String>.from(appState.availableCountries),
+                            );
+                          } else {
+                            appState.setCountries([]);
+                          }
+                        },
+                      ),
+                      const Divider(height: 1),
+                      ConstrainedBox(
+                        constraints: const BoxConstraints(maxHeight: 220),
+                        child: ListView(
+                          shrinkWrap: true,
+                          children: appState.availableCountries.map((country) {
+                            final isSelected = appState.configuration.countries
+                                .contains(country);
+                            return CheckboxListTile(
+                              dense: true,
+                              controlAffinity: ListTileControlAffinity.leading,
+                              title: Text(country),
+                              value: isSelected,
+                              onChanged: (selected) {
+                                final countries = List<String>.from(
+                                  appState.configuration.countries,
+                                );
+                                if (selected == true) {
+                                  if (!countries.contains(country)) {
+                                    countries.add(country);
+                                  }
+                                } else {
+                                  countries.remove(country);
+                                }
+                                appState.setCountries(countries);
+                              },
+                            );
+                          }).toList(),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
               const SizedBox(height: 24),
 
-              // Apple App Store Collections (conditional)
-              if (appState.configuration.targetStore != 'google_play') ...[
-                const Text(
-                  'App Store Collection (Optional)',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+              const Text(
+                'Top Collections',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 8),
+              CheckboxListTile(
+                contentPadding: EdgeInsets.zero,
+                title: const Text('Search top collections'),
+                subtitle: const Text(
+                  'Search all top collections in SPORTS and HEALTH_AND_FITNESS for selected stores only.',
                 ),
-                const SizedBox(height: 8),
-                DropdownButtonFormField<String>(
-                  value: appState.configuration.collection,
-                  decoration: InputDecoration(
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 12,
-                    ),
-                  ),
-                  items: const [
-                    DropdownMenuItem(value: null, child: Text('None')),
-                    DropdownMenuItem(value: 'topFree', child: Text('Top Free')),
-                    DropdownMenuItem(
-                      value: 'topGrossing',
-                      child: Text('Top Grossing'),
-                    ),
-                    DropdownMenuItem(value: 'newApps', child: Text('New Apps')),
-                  ],
-                  onChanged: (value) {
-                    appState.setCollection(value);
-                  },
-                ),
-                const SizedBox(height: 24),
-              ],
+                value: appState.configuration.searchTopCollections,
+                onChanged: (value) {
+                  appState.setSearchTopCollections(value ?? false);
+                },
+              ),
+              const SizedBox(height: 24),
 
               // LLM Model Selection
               const Text(
@@ -215,7 +284,7 @@ class _ConfigurationFormState extends State<ConfigurationForm> {
               ),
               const SizedBox(height: 8),
               DropdownButtonFormField<String>(
-                value: appState.configuration.llmModel,
+                initialValue: appState.configuration.llmModel,
                 decoration: InputDecoration(
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
@@ -329,23 +398,13 @@ class _ConfigurationFormState extends State<ConfigurationForm> {
     );
   }
 
-  Widget _buildStoreButton(
-    String value,
-    String label,
-    AppStateProvider appState,
-  ) {
-    final isSelected = appState.configuration.targetStore == value;
-    return ElevatedButton(
-      onPressed: () {
-        appState.setTargetStore(value);
-      },
-      style: ElevatedButton.styleFrom(
-        backgroundColor: isSelected
-            ? Theme.of(context).primaryColor
-            : Colors.grey.shade300,
-        foregroundColor: isSelected ? Colors.white : Colors.black,
-      ),
-      child: Text(label),
-    );
+  String _buildCountriesSummary(List<String> selectedCountries, int total) {
+    if (selectedCountries.isEmpty) {
+      return 'Select countries';
+    }
+    if (selectedCountries.length == total) {
+      return 'All countries selected';
+    }
+    return '${selectedCountries.length} countries selected';
   }
 }
