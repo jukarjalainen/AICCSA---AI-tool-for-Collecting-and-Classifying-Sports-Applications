@@ -81,7 +81,8 @@ class _HomePageState extends State<HomePage> {
       return;
     }
 
-    if (appState.apiKey == null || appState.apiKey!.isEmpty) {
+    if (!config.scrapeOnly &&
+        (appState.apiKey == null || appState.apiKey!.isEmpty)) {
       _showErrorSnackBar('Please enter your OpenAI API key');
       return;
     }
@@ -104,6 +105,7 @@ class _HomePageState extends State<HomePage> {
         countries: config.countries,
         llmModel: config.llmModel,
         searchTopCollections: config.searchTopCollections,
+        scrapeOnly: config.scrapeOnly,
         apiKey: appState.apiKey,
       );
 
@@ -118,37 +120,39 @@ class _HomePageState extends State<HomePage> {
         debugPrint('[Error] $line');
       });
 
-      _batchStatusSubscription?.cancel();
-      _batchStatusSubscription = ProcessService.pollBatchStatus().listen((
-        status,
-      ) {
-        final batches = (status['batches'] as List<dynamic>? ?? []);
-        final batchIds = batches
-            .map(
-              (b) => b is Map<String, dynamic>
-                  ? (b['batchId']?.toString() ?? '')
-                  : '',
-            )
-            .where((id) => id.isNotEmpty)
-            .toList();
+      if (!config.scrapeOnly) {
+        _batchStatusSubscription?.cancel();
+        _batchStatusSubscription = ProcessService.pollBatchStatus().listen((
+          status,
+        ) {
+          final batches = (status['batches'] as List<dynamic>? ?? []);
+          final batchIds = batches
+              .map(
+                (b) => b is Map<String, dynamic>
+                    ? (b['batchId']?.toString() ?? '')
+                    : '',
+              )
+              .where((id) => id.isNotEmpty)
+              .toList();
 
-        if (batchIds.isNotEmpty || status['status'] == 'error') {
-          final stage = status['stage']?.toString();
-          final mappedStage =
-              stage == 'uploading' || stage == 'polling' || stage == 'merging'
-              ? stage
-              : appState.progress.stage;
-          appState.updateProgress(
-            appState.progress.copyWith(
-              stage: mappedStage,
-              batchIds: batchIds,
-              message: status['status'] == 'error'
-                  ? 'Batch status reported an error'
-                  : appState.progress.message,
-            ),
-          );
-        }
-      });
+          if (batchIds.isNotEmpty || status['status'] == 'error') {
+            final stage = status['stage']?.toString();
+            final mappedStage =
+                stage == 'uploading' || stage == 'polling' || stage == 'merging'
+                ? stage
+                : appState.progress.stage;
+            appState.updateProgress(
+              appState.progress.copyWith(
+                stage: mappedStage,
+                batchIds: batchIds,
+                message: status['status'] == 'error'
+                    ? 'Batch status reported an error'
+                    : appState.progress.message,
+              ),
+            );
+          }
+        });
+      }
 
       // Wait for process to complete
       final exitCode = await _currentProcess!.exitCode;

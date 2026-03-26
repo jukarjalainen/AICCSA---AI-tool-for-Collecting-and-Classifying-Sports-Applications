@@ -288,6 +288,17 @@ class _ConfigurationFormState extends State<ConfigurationForm> {
                   appState.setSearchTopCollections(value ?? false);
                 },
               ),
+              CheckboxListTile(
+                contentPadding: EdgeInsets.zero,
+                title: const Text('Run scraping only (skip AI classification)'),
+                subtitle: const Text(
+                  'Export scraped app data to CSV/JSON and do not run OpenAIBatchClassifier.',
+                ),
+                value: appState.configuration.scrapeOnly,
+                onChanged: (value) {
+                  appState.setScrapeOnly(value ?? false);
+                },
+              ),
               const SizedBox(height: 24),
 
               // LLM Model Selection

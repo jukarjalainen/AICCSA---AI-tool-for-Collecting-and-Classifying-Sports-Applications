@@ -87,6 +87,7 @@ const searchTopCollections = parseBoolean(
   cliArgs["search-top-collections"],
   false,
 );
+const scrapeOnly = parseBoolean(cliArgs["scrape-only"], false);
 const selectedCountries = normalizeCountries(cliArgs.countries);
 const selectedModel = cliArgs.model || "gpt-5-mini";
 const apiKey = cliArgs["api-key"] || "";
@@ -216,6 +217,7 @@ async function main() {
   logToFile(`⚙️ Countries: ${selectedCountries.join(",")}`);
   logToFile(`⚙️ Use essential queries: ${useEssentialQueries}`);
   logToFile(`⚙️ Search top collections: ${searchTopCollections}`);
+  logToFile(`⚙️ Scrape-only mode: ${scrapeOnly}`);
   logToFile(`⚙️ Model: ${selectedModel}`);
   logToFile(`⚙️ API key provided: ${apiKey.length > 0}`);
 
@@ -289,11 +291,17 @@ async function main() {
       await exportCombinedToJSON(combinedApps, jsonFilename, logToFile);
       await exportCombinedToCSV(combinedApps, csvFilename, logToFile);
 
-      await runOpenAIBatchClassifier({
-        inputFile: csvFilename,
-        model: selectedModel,
-        apiKey,
-      });
+      if (!scrapeOnly) {
+        await runOpenAIBatchClassifier({
+          inputFile: csvFilename,
+          model: selectedModel,
+          apiKey,
+        });
+      } else {
+        logToFile(
+          "⏭️ Scrape-only mode enabled: skipping OpenAI batch classification.",
+        );
+      }
 
       logToFile("\n✅ scraping completed successfully!");
       logToFile("📄 Files created:");

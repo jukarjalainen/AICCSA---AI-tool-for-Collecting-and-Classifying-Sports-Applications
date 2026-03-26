@@ -5,6 +5,7 @@ class AppConfiguration {
   final List<String> countries;
   final String? collection; // For App Store specific collections
   final bool searchTopCollections;
+  final bool scrapeOnly;
   final String llmModel;
   final bool useCustomApi;
 
@@ -15,6 +16,7 @@ class AppConfiguration {
     required this.countries,
     this.collection,
     this.searchTopCollections = false,
+    this.scrapeOnly = false,
     this.llmModel = 'gpt-5-mini',
     this.useCustomApi = false,
   });
@@ -26,6 +28,7 @@ class AppConfiguration {
     List<String>? countries,
     String? collection,
     bool? searchTopCollections,
+    bool? scrapeOnly,
     String? llmModel,
     bool? useCustomApi,
   }) {
@@ -36,6 +39,7 @@ class AppConfiguration {
       countries: countries ?? this.countries,
       collection: collection ?? this.collection,
       searchTopCollections: searchTopCollections ?? this.searchTopCollections,
+      scrapeOnly: scrapeOnly ?? this.scrapeOnly,
       llmModel: llmModel ?? this.llmModel,
       useCustomApi: useCustomApi ?? this.useCustomApi,
     );

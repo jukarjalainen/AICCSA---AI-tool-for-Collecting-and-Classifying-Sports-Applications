@@ -9,6 +9,7 @@ class AppStateProvider with ChangeNotifier {
     useEssentialQueries: false,
     countries: ['US'],
     searchTopCollections: false,
+    scrapeOnly: false,
     llmModel: 'gpt-5-mini',
   );
 
@@ -78,6 +79,7 @@ class AppStateProvider with ChangeNotifier {
       final collection = prefs.getString('collection');
       final searchTopCollections =
           prefs.getBool('searchTopCollections') ?? false;
+      final scrapeOnly = prefs.getBool('scrapeOnly') ?? false;
       final llmModel = prefs.getString('llmModel') ?? 'gpt-5-mini';
 
       _configuration = AppConfiguration(
@@ -87,6 +89,7 @@ class AppStateProvider with ChangeNotifier {
         countries: countries,
         collection: collection,
         searchTopCollections: searchTopCollections,
+        scrapeOnly: scrapeOnly,
         llmModel: llmModel,
       );
       notifyListeners();
@@ -110,6 +113,7 @@ class AppStateProvider with ChangeNotifier {
         await prefs.setString('collection', config.collection!);
       }
       await prefs.setBool('searchTopCollections', config.searchTopCollections);
+      await prefs.setBool('scrapeOnly', config.scrapeOnly);
       await prefs.setString('llmModel', config.llmModel);
     } catch (e) {
       debugPrint('Error saving configuration: $e');
@@ -170,6 +174,11 @@ class AppStateProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  void setScrapeOnly(bool enabled) {
+    _configuration = _configuration.copyWith(scrapeOnly: enabled);
+    notifyListeners();
+  }
+
   // Update LLM model
   void setLlmModel(String model) {
     _configuration = _configuration.copyWith(llmModel: model);
@@ -223,6 +232,7 @@ class AppStateProvider with ChangeNotifier {
       useEssentialQueries: false,
       countries: ['US'],
       searchTopCollections: false,
+      scrapeOnly: false,
       llmModel: 'gpt-5-mini',
     );
     _progress = ProcessProgress();

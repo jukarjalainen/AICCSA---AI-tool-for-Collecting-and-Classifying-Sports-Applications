@@ -13,6 +13,7 @@ class ProcessService {
     required List<String> countries,
     required String llmModel,
     required bool searchTopCollections,
+    required bool scrapeOnly,
     String? apiKey,
   }) async {
     try {
@@ -24,6 +25,7 @@ class ProcessService {
         '--countries=${countries.join(",")}',
         '--model=$llmModel',
         '--search-top-collections=$searchTopCollections',
+        '--scrape-only=$scrapeOnly',
         '--top-collection-stores=$targetStore',
         '--top-collection-categories=SPORTS,HEALTH_AND_FITNESS',
         if (apiKey != null) '--api-key=$apiKey',
