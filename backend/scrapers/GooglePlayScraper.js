@@ -109,12 +109,55 @@ export class GooglePlayScraper {
             logToFile(
               `PLAYSTORE    Searching: "${query}" in ${country.toUpperCase()}`,
             );
-            const searchApps = await gplay.search({
-              term: query,
-              num: 250, // max is 250
-              country: country,
-              fullDetail: true, // Need full details for genre information
-            });
+            let searchApps = [];
+            try {
+              const searchAppsRaw = await gplay.search({
+                term: query,
+                num: 250, // max is 250
+                country: country,
+                fullDetail: true, // Need full details for genre information
+              });
+              searchApps = Array.isArray(searchAppsRaw) ? searchAppsRaw : [];
+            } catch (searchFullDetailError) {
+              logToFile(
+                `      ⚠️ PLAY STORE fullDetail search failed for "${query}" in ${country.toUpperCase()}: ${searchFullDetailError.message}`,
+              );
+              logToFile(
+                `      🔁 PLAY STORE Falling back to summary search + per-app detail fetch...`,
+              );
+
+              const summaryResults = await gplay.search({
+                term: query,
+                num: 250,
+                country: country,
+                fullDetail: false,
+              });
+
+              const summaryApps = Array.isArray(summaryResults)
+                ? summaryResults
+                : [];
+              const enrichedApps = [];
+
+              for (const summaryApp of summaryApps) {
+                if (!summaryApp.appId) {
+                  continue;
+                }
+                try {
+                  const fullApp = await gplay.app({
+                    appId: summaryApp.appId,
+                    country,
+                    lang: "en",
+                  });
+                  enrichedApps.push(fullApp);
+                } catch (detailError) {
+                  logToFile(
+                    `      ⚠️ PLAY STORE Detail fetch failed for ${summaryApp.appId}: ${detailError.message}`,
+                  );
+                  enrichedApps.push(summaryApp);
+                }
+              }
+              searchApps = enrichedApps;
+            }
 
             // Log total results found
             logToFile(
@@ -124,7 +167,7 @@ export class GooglePlayScraper {
             // Log genre distribution for debugging
             const genreCount = {};
             searchApps.forEach((app) => {
-              const genre = app.genreID;
+              const genre = app.genreId || app.genre || "UNKNOWN";
               genreCount[genre] = (genreCount[genre] || 0) + 1;
             });
             logToFile(`      🏷️  Genres found: ${JSON.stringify(genreCount)}`);
@@ -195,7 +238,7 @@ export class GooglePlayScraper {
                   searchQuery: query,
                   sourceCountry: country,
                   targetCategory: "SPORTS_AND_HEALTH_AND_FITNESS",
-                  actualGenre: app.genreID,
+                  actualGenre: app.genreId || app.genre || "",
                 });
                 newSearchAppsCount++;
               }
