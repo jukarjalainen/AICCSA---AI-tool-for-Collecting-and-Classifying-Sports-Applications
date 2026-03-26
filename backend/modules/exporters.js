@@ -48,7 +48,6 @@ export async function exportPlayStoreToJSON(apps, filename, logToFile) {
         isAvailableInPlayPass: app.isAvailableInPlayPass,
         editorsChoice: app.editorsChoice,
         appId: app.appId,
-        url: app.url,
         // Existing cross-platform and source fields
         platform: app.platform,
         platforms: app.platforms || [app.platform],

@@ -3,6 +3,7 @@
  * Runs both store scrapers, merges/deduplicates results, exports files, and writes logs.
  */
 import fs from "fs/promises";
+import { spawn } from "child_process";
 import { countriesEssential } from "./lists/countries_essential.js";
 import { searchQueriesEssential } from "./lists/searchQueries_essential.js";
 import { AppStoreScraper } from "./scrapers/AppStoreScraper.js";
@@ -110,6 +111,60 @@ async function saveLogFile() {
   } catch (error) {
     console.error(`Failed to save log file: ${error.message}`);
   }
+}
+
+function runOpenAIBatchClassifier({ inputFile, model, apiKey }) {
+  return new Promise((resolve, reject) => {
+    const args = [
+      "-m",
+      "backend.openAIBatchClassifier.src.main",
+      `--input-file=${inputFile}`,
+      `--model=${model}`,
+    ];
+
+    if (apiKey && apiKey.length > 0) {
+      args.push(`--api-key=${apiKey}`);
+    }
+
+    logToFile("\n🤖 Starting OpenAI batch classification pipeline...");
+    const child = spawn("python", args, {
+      cwd: process.cwd(),
+      env: {
+        ...process.env,
+        ...(apiKey && apiKey.length > 0 ? { OPENAI_API_KEY: apiKey } : {}),
+      },
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+
+    child.stdout.on("data", (data) => {
+      const lines = data.toString().split(/\r?\n/).filter(Boolean);
+      for (const line of lines) {
+        logToFile(`[openai-batch] ${line}`);
+      }
+    });
+
+    child.stderr.on("data", (data) => {
+      const lines = data.toString().split(/\r?\n/).filter(Boolean);
+      for (const line of lines) {
+        logToFile(`[openai-batch][stderr] ${line}`);
+      }
+    });
+
+    child.on("error", (error) => {
+      reject(
+        new Error(`Failed to start Python batch classifier: ${error.message}`),
+      );
+    });
+
+    child.on("close", (code) => {
+      if (code === 0) {
+        logToFile("✅ OpenAI batch classification completed successfully");
+        resolve();
+        return;
+      }
+      reject(new Error(`Python batch classifier exited with code ${code}`));
+    });
+  });
 }
 
 /**
@@ -233,6 +288,12 @@ async function main() {
       // Export combined files
       await exportCombinedToJSON(combinedApps, jsonFilename, logToFile);
       await exportCombinedToCSV(combinedApps, csvFilename, logToFile);
+
+      await runOpenAIBatchClassifier({
+        inputFile: csvFilename,
+        model: selectedModel,
+        apiKey,
+      });
 
       logToFile("\n✅ scraping completed successfully!");
       logToFile("📄 Files created:");
