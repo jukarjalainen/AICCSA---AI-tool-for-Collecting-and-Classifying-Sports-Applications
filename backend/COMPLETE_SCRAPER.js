@@ -15,11 +15,27 @@ import {
   exportPlayStoreToCSV,
   exportCombinedToJSON,
   exportCombinedToCSV,
+  exportCombinedToXLSX,
 } from "./modules/exporters.js";
 
 function parseBoolean(value, fallback = false) {
   if (value == null) return fallback;
+  if (value === "") return true;
   return String(value).toLowerCase() === "true";
+}
+
+function normalizeStoreTarget(value) {
+  const normalized = String(value || "both").toLowerCase();
+  if (normalized === "google" || normalized === "google_play") {
+    return "google_play";
+  }
+  if (normalized === "apple" || normalized === "app_store") {
+    return "app_store";
+  }
+  if (normalized === "both") {
+    return "both";
+  }
+  return "both";
 }
 
 function parseCliArgs() {
@@ -78,7 +94,7 @@ function normalizeCountries(countriesArg) {
 }
 
 const cliArgs = parseCliArgs();
-const targetStore = cliArgs.store || "both";
+const targetStore = normalizeStoreTarget(cliArgs.store);
 const useEssentialQueries = parseBoolean(
   cliArgs["use-essential-queries"],
   false,
@@ -256,17 +272,20 @@ async function main() {
 
     if (combinedApps.length > 0) {
       printCombinedSummary(combinedApps, logToFile);
+      const outputDir = "backend/output";
+      await fs.mkdir(outputDir, { recursive: true });
 
       // Create timestamped filenames
       const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-      const jsonFilename = `COMPLETE_sports_fitness_apps_${timestamp}.json`;
-      const csvFilename = `COMPLETE_sports_fitness_apps_${timestamp}.csv`;
+      const jsonFilename = `${outputDir}/COMPLETE_sports_fitness_apps_${timestamp}.json`;
+      const csvFilename = `${outputDir}/COMPLETE_sports_fitness_apps_${timestamp}.csv`;
+      const xlsxFilename = `${outputDir}/COMPLETE_sports_fitness_apps_${timestamp}.xlsx`;
       // Apple only
-      const appleJsonFilename = `COMPLETE_appstore_sports_fitness_apps_${timestamp}.json`;
-      const appleCsvFilename = `COMPLETE_appstore_sports_fitness_apps_${timestamp}.csv`;
+      const appleJsonFilename = `${outputDir}/COMPLETE_appstore_sports_fitness_apps_${timestamp}.json`;
+      const appleCsvFilename = `${outputDir}/COMPLETE_appstore_sports_fitness_apps_${timestamp}.csv`;
       // Google Play only
-      const playJsonFilename = `COMPLETE_playstore_sports_fitness_apps_${timestamp}.json`;
-      const playCsvFilename = `COMPLETE_playstore_sports_fitness_apps_${timestamp}.csv`;
+      const playJsonFilename = `${outputDir}/COMPLETE_playstore_sports_fitness_apps_${timestamp}.json`;
+      const playCsvFilename = `${outputDir}/COMPLETE_playstore_sports_fitness_apps_${timestamp}.csv`;
 
       // Export Apple App Store results
       if (appStoreApps.length > 0) {
@@ -290,6 +309,14 @@ async function main() {
       // Export combined files
       await exportCombinedToJSON(combinedApps, jsonFilename, logToFile);
       await exportCombinedToCSV(combinedApps, csvFilename, logToFile);
+      if (scrapeOnly) {
+        await exportCombinedToXLSX(combinedApps, xlsxFilename, logToFile);
+        await fs.copyFile(csvFilename, `${outputDir}/latest_scrape_output.csv`);
+        await fs.copyFile(
+          xlsxFilename,
+          `${outputDir}/latest_scrape_output.xlsx`,
+        );
+      }
 
       if (!scrapeOnly) {
         await runOpenAIBatchClassifier({
@@ -307,6 +334,9 @@ async function main() {
       logToFile("📄 Files created:");
       logToFile(`  - ${jsonFilename} (Combined JSON)`);
       logToFile(`  - ${csvFilename} (Combined CSV)`);
+      if (scrapeOnly) {
+        logToFile(`  - ${xlsxFilename} (Combined XLSX)`);
+      }
       logToFile(
         `\n🎯 Summary: Collected ${combinedApps.length} unique sports & fitness apps from both platforms`,
       );

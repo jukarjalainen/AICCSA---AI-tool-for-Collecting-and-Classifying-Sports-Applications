@@ -66,6 +66,11 @@ class _ResultsDisplayState extends State<ResultsDisplay> {
       return stableFile;
     }
 
+    final scrapeStableCsv = File('backend/output/latest_scrape_output.csv');
+    if (await scrapeStableCsv.exists()) {
+      return scrapeStableCsv;
+    }
+
     final outDir = Directory('backend/openAIBatchClassifier/out');
     if (await outDir.exists()) {
       final entries = await outDir
@@ -86,6 +91,31 @@ class _ResultsDisplayState extends State<ResultsDisplay> {
           return bTime.compareTo(aTime);
         });
         return entries.first;
+      }
+    }
+
+    final scrapeOutDir = Directory('backend/output');
+    if (await scrapeOutDir.exists()) {
+      final scrapeCsvEntries = await scrapeOutDir
+          .list()
+          .where(
+            (e) =>
+                e is File &&
+                e.path.toLowerCase().contains(
+                  'complete_sports_fitness_apps_',
+                ) &&
+                e.path.toLowerCase().endsWith('.csv'),
+          )
+          .cast<File>()
+          .toList();
+
+      if (scrapeCsvEntries.isNotEmpty) {
+        scrapeCsvEntries.sort((a, b) {
+          final aTime = a.statSync().modified;
+          final bTime = b.statSync().modified;
+          return bTime.compareTo(aTime);
+        });
+        return scrapeCsvEntries.first;
       }
     }
 
@@ -203,7 +233,7 @@ class _ResultsDisplayState extends State<ResultsDisplay> {
     try {
       final path =
           _loadedFilePath ??
-          'backend/openAIBatchClassifier/out/apps_with_classification_*.csv';
+          'backend/openAIBatchClassifier/out/latest_classified.csv or backend/output/latest_scrape_output.xlsx';
       final file = _loadedFilePath != null ? File(_loadedFilePath!) : null;
       if (file != null && await file.exists()) {
         // In a real app, you might use path_provider to get a suitable export location

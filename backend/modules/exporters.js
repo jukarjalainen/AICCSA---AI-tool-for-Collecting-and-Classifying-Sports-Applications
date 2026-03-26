@@ -3,6 +3,95 @@
  * Writes platform-specific and combined scraping results to JSON and CSV formats.
  */
 import fs from "fs/promises";
+import XLSX from "xlsx";
+
+const OUTPUT_COLUMNS = [
+  "id",
+  "appId",
+  "title",
+  "platform",
+  "sourceCountry",
+  "sourceMethod",
+  "searchQuery",
+  "targetCategory",
+  "genre",
+  "genreId",
+  "primaryGenre",
+  "primaryGenreId",
+  "developer",
+  "developerId",
+  "developerInternalID",
+  "installs",
+  "minInstalls",
+  "maxInstalls",
+  "score",
+  "scoreText",
+  "ratings",
+  "reviews",
+  "price",
+  "currency",
+  "priceText",
+  "free",
+  "offersIAP",
+  "IAPRange",
+  "androidVersion",
+  "androidMaxVersion",
+  "contentRating",
+  "released",
+  "updated",
+  "version",
+  "url",
+  "is_relevant",
+  "purpose",
+  "stakeholder",
+  "sport_type",
+];
+
+function buildOutputRow(app) {
+  const resolvedId = app.id || app.appId || "";
+  return {
+    id: resolvedId,
+    appId: app.appId || resolvedId,
+    title: app.title || "",
+    platform: app.platform || "",
+    sourceCountry: app.sourceCountry || "",
+    sourceMethod: app.sourceMethod || "",
+    searchQuery: app.searchQuery || "",
+    targetCategory: app.targetCategory || "",
+    genre: app.genre || "",
+    genreId: app.genreId || "",
+    primaryGenre: app.primaryGenre || "",
+    primaryGenreId: app.primaryGenreId || "",
+    developer: app.developer || "",
+    developerId: app.developerId || "",
+    developerInternalID: app.developerInternalID || "",
+    installs: app.installs || "",
+    minInstalls: app.minInstalls || "",
+    maxInstalls: app.maxInstalls || "",
+    score: app.score || "",
+    scoreText: app.scoreText || "",
+    ratings: app.ratings || "",
+    reviews: app.reviews || "",
+    price: app.price || "",
+    currency: app.currency || "",
+    priceText: app.priceText || "",
+    free: app.free ? "TRUE" : "FALSE",
+    offersIAP: app.offersIAP ? "TRUE" : "FALSE",
+    IAPRange: app.IAPRange || "",
+    androidVersion: app.androidVersion || "",
+    androidMaxVersion: app.androidMaxVersion || "",
+    contentRating: app.contentRating || "",
+    released: app.released || "",
+    updated: app.updated || "",
+    version: app.version || "",
+    url: app.url || "",
+    // Filled during OpenAIBatchClassifier phase
+    is_relevant: app.is_relevant ?? "",
+    purpose: app.purpose ?? "",
+    stakeholder: app.stakeholder ?? "",
+    sport_type: app.sport_type ?? "",
+  };
+}
 
 // Play Store-specific JSON export with all available fields
 export async function exportPlayStoreToJSON(apps, filename, logToFile) {
@@ -290,157 +379,13 @@ export async function exportCombinedToJSON(apps, filename, logToFile) {
  */
 export async function exportCombinedToCSV(apps, filename, logToFile) {
   try {
-    // Superset schema: all App Store and Play Store fields
-    const headers = [
-      // App Store fields
-      "id",
-      "appId",
-      "title",
-      "genres",
-      "genreIds",
-      "primaryGenre",
-      "primaryGenreId",
-      "contentRating",
-      "languages",
-      "size",
-      "requiredOsVersion",
-      "released",
-      "updated",
-      "price",
-      "currency",
-      "free",
-      "developerId",
-      "developer",
-      "score",
-      "reviews",
-      "currentVersionScore",
-      "currentVersionReviews",
-      "supportedDevices",
-      // Play Store fields
-      "installs",
-      "minInstalls",
-      "maxInstalls",
-      "ratings",
-      "histogram_1",
-      "histogram_2",
-      "histogram_3",
-      "histogram_4",
-      "histogram_5",
-      "priceText",
-      "offersIAP",
-      "IAPRange",
-      "androidVersion",
-      "androidMaxVersion",
-      "developerInternalID",
-      "genre",
-      "genreId",
-      "categories",
-      "adSupported",
-      "preregister",
-      "earlyAccessEnabled",
-      "isAvailableInPlayPass",
-      "editorsChoice",
-      // Existing cross-platform and source fields
-      "platform",
-      "platforms",
-      "availableOnBothPlatforms",
-      "crossPlatformMethod",
-      "crossPlatformAppIds",
-      "sourceMethod",
-      "sourceCollection",
-      "sourceCountry",
-      "searchQuery",
-      "subCategory",
-      "targetCategory",
-    ];
-    const csvRows = [headers.join(",")];
+    const csvRows = [OUTPUT_COLUMNS.join(",")];
     apps.forEach((app) => {
-      const row = [
-        // App Store fields
-        app.id || "",
-        app.appId || "",
-        (app.title || "").replace(/"/g, '""'),
-        Array.isArray(app.genres) ? app.genres.join("; ") : app.genres || "",
-        Array.isArray(app.genreIds)
-          ? app.genreIds.join("; ")
-          : app.genreIds || "",
-        app.primaryGenre || "",
-        app.primaryGenreId || "",
-        app.contentRating || "",
-        Array.isArray(app.languages)
-          ? app.languages.join("; ")
-          : app.languages || "",
-        app.size || "",
-        app.requiredOsVersion || "",
-        app.released || "",
-        app.updated || "",
-        app.price || "",
-        app.currency || "",
-        app.free ? "TRUE" : "FALSE",
-        app.developerId || "",
-        (app.developer || "").replace(/"/g, '""'),
-        app.score || "",
-        app.reviews || "",
-        app.currentVersionScore || "",
-        app.currentVersionReviews || "",
-        Array.isArray(app.supportedDevices)
-          ? app.supportedDevices.join("; ")
-          : app.supportedDevices || "",
-        // Play Store fields
-        app.installs || "",
-        app.minInstalls || "",
-        app.maxInstalls || "",
-        app.ratings || "",
-        app.histogram && app.histogram["1"] !== undefined
-          ? app.histogram["1"]
-          : "",
-        app.histogram && app.histogram["2"] !== undefined
-          ? app.histogram["2"]
-          : "",
-        app.histogram && app.histogram["3"] !== undefined
-          ? app.histogram["3"]
-          : "",
-        app.histogram && app.histogram["4"] !== undefined
-          ? app.histogram["4"]
-          : "",
-        app.histogram && app.histogram["5"] !== undefined
-          ? app.histogram["5"]
-          : "",
-        app.priceText || "",
-        app.offersIAP ? "TRUE" : "FALSE",
-        app.IAPRange || "",
-        app.androidVersion || "",
-        app.androidMaxVersion || "",
-        app.developerInternalID || "",
-        app.genre || "",
-        app.genreId || "",
-        Array.isArray(app.categories)
-          ? app.categories.map((c) => `${c.name}:${c.id}`).join("; ")
-          : app.categories || "",
-        app.adSupported ? "TRUE" : "FALSE",
-        app.preregister ? "TRUE" : "FALSE",
-        app.earlyAccessEnabled ? "TRUE" : "FALSE",
-        app.isAvailableInPlayPass ? "TRUE" : "FALSE",
-        app.editorsChoice ? "TRUE" : "FALSE",
-        // Existing cross-platform and source fields
-        app.platform || "",
-        Array.isArray(app.platforms)
-          ? app.platforms.join("; ")
-          : app.platforms || "",
-        app.availableOnBothPlatforms ? "TRUE" : "FALSE",
-        app.crossPlatformMethod || "",
-        Array.isArray(app.crossPlatformAppIds)
-          ? app.crossPlatformAppIds.join("; ")
-          : app.crossPlatformAppIds || "",
-        app.sourceMethod || "",
-        app.sourceCollection || "",
-        app.sourceCountry || "",
-        app.searchQuery || "",
-        app.subCategory || app.searchQuery || "",
-        app.targetCategory || "",
-      ]
-        .map((field) => `"${field}"`)
-        .join(",");
+      const rowObj = buildOutputRow(app);
+      const row = OUTPUT_COLUMNS.map((column) => {
+        const field = String(rowObj[column] ?? "").replace(/"/g, '""');
+        return `"${field}"`;
+      }).join(",");
       csvRows.push(row);
     });
 
@@ -448,5 +393,27 @@ export async function exportCombinedToCSV(apps, filename, logToFile) {
     logToFile(`📊 Enhanced CSV data exported to ${filename}`);
   } catch (error) {
     logToFile(`Failed to export combined CSV: ${error.message}`);
+  }
+}
+
+/**
+ * Export combined apps data to XLSX file.
+ */
+export async function exportCombinedToXLSX(apps, filename, logToFile) {
+  try {
+    const titleRow = ["AICCSA Sports & Fitness Apps"];
+    const dataRows = apps.map((app) => {
+      const rowObj = buildOutputRow(app);
+      return OUTPUT_COLUMNS.map((column) => rowObj[column] ?? "");
+    });
+    const worksheetData = [titleRow, OUTPUT_COLUMNS, ...dataRows];
+
+    const workbook = XLSX.utils.book_new();
+    const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Apps");
+    XLSX.writeFile(workbook, filename);
+    logToFile(`📗 Combined XLSX data exported to ${filename}`);
+  } catch (error) {
+    logToFile(`Failed to export combined XLSX: ${error.message}`);
   }
 }

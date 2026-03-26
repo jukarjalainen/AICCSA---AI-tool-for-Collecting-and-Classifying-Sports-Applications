@@ -54,6 +54,11 @@ def read_app_table(input_path: str | None = None, ids_only: bool = True):
     if platform_col != "platform":
         df = df.rename(columns={platform_col: "platform"})
 
+    if "appId" in df.columns:
+        df["id"] = df["id"].fillna("").astype(str)
+        fallback_ids = df["appId"].fillna("").astype(str)
+        df["id"] = df["id"].where(df["id"].str.strip() != "", fallback_ids)
+
     df["id"] = df["id"].astype(str).str.strip()
     df["platform"] = df["platform"].astype(str).str.strip().map(_canonical_platform)
     df = df[(df["id"] != "") & (df["platform"].isin(["iOS", "Android"]))]

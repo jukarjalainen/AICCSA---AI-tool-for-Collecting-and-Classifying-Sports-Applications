@@ -49,14 +49,44 @@ def merge_to_csv(input_file: str, output_files: list[str]):
         if col in preds.columns:
             preds[col] = preds[col].astype(str).str.strip()
 
-    want = [
-        "id","platform","athlete","support_staff","supporter",
-        "governing_entity","sport_type","purpose","not_relevant"
-    ]
-    keep = [c for c in want if c in preds.columns]
+    for c in ("athlete", "support_staff", "supporter", "governing_entity", "not_relevant"):
+        if c in preds.columns:
+            preds[c] = preds[c].fillna(False).astype(bool)
+
+    stakeholder_parts = []
+    for key in ("athlete", "support_staff", "supporter", "governing_entity"):
+        if key in preds.columns:
+            stakeholder_parts.append(
+                preds.apply(lambda r: key if bool(r.get(key, False)) else "", axis=1)
+            )
+
+    if stakeholder_parts:
+        preds["stakeholder"] = (
+            pd.concat(stakeholder_parts, axis=1)
+            .apply(lambda row: "|".join([v for v in row.tolist() if v]), axis=1)
+        )
+    else:
+        preds["stakeholder"] = ""
+
+    if "not_relevant" in preds.columns:
+        preds["is_relevant"] = (~preds["not_relevant"]).map(lambda v: "TRUE" if v else "FALSE")
+    else:
+        preds["is_relevant"] = ""
+
+    if "sport_type" not in preds.columns:
+        preds["sport_type"] = ""
+    if "purpose" not in preds.columns:
+        preds["purpose"] = ""
+
+    keep = [c for c in ["id", "platform", "is_relevant", "purpose", "stakeholder", "sport_type"] if c in preds.columns]
     preds = preds[keep]
 
     merged = base.merge(preds, on=["id","platform"], how="left")
+
+    for c in ("is_relevant", "purpose", "stakeholder", "sport_type"):
+        if c not in merged.columns:
+            merged[c] = ""
+        merged[c] = merged[c].fillna("")
 
     # ---- timestamped output name: YYYY-DD-MM_HHMM ----
     ts = datetime.now().strftime("%Y-%d-%m_%H%M")  # year-day-month_hourminute
