@@ -66,11 +66,6 @@ class _ResultsDisplayState extends State<ResultsDisplay> {
       return stableFile;
     }
 
-    final scrapeStableCsv = File('backend/output/latest_scrape_output.csv');
-    if (await scrapeStableCsv.exists()) {
-      return scrapeStableCsv;
-    }
-
     final outDir = Directory('backend/openAIBatchClassifier/out');
     if (await outDir.exists()) {
       final entries = await outDir
@@ -101,9 +96,11 @@ class _ResultsDisplayState extends State<ResultsDisplay> {
           .where(
             (e) =>
                 e is File &&
-                e.path.toLowerCase().contains(
-                  'complete_sports_fitness_apps_',
-                ) &&
+                (e.path.toLowerCase().contains('scrape_output_csv_') ||
+                    e.path.toLowerCase().contains(
+                      'complete_sports_fitness_apps_',
+                    ) ||
+                    e.path.toLowerCase().contains('latest_scrape_output')) &&
                 e.path.toLowerCase().endsWith('.csv'),
           )
           .cast<File>()

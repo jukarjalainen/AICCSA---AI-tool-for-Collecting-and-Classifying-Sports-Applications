@@ -272,8 +272,10 @@ async function main() {
       const outputDir = "backend/output";
       await fs.mkdir(outputDir, { recursive: true });
 
-      const csvFilename = `${outputDir}/latest_scrape_output.csv`;
-      const xlsxFilename = `${outputDir}/latest_scrape_output.xlsx`;
+      const now = new Date();
+      const timestamp = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}_${String(now.getHours()).padStart(2, "0")}${String(now.getMinutes()).padStart(2, "0")}`;
+      const csvFilename = `${outputDir}/scrape_output_CSV_${timestamp}.csv`;
+      const xlsxFilename = `${outputDir}/scrape_output_XLSX_${timestamp}.xlsx`;
 
       await exportCombinedToCSV(combinedApps, csvFilename, logToFile);
       await exportCombinedToXLSX(combinedApps, xlsxFilename, logToFile);
