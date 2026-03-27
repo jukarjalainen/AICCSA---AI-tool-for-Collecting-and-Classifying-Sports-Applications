@@ -12,7 +12,6 @@ export function printCombinedSummary(apps, logToFile) {
   const sourceMethodCount = {};
   const countryCount = {};
   const freeVsPaid = { free: 0, paid: 0 };
-  const crossPlatformMethods = { appId: 0, title: 0 };
   let crossPlatformApps = 0;
   let appleOnlyApps = 0;
   let googleOnlyApps = 0;
@@ -25,12 +24,6 @@ export function printCombinedSummary(apps, logToFile) {
     // Count cross-platform apps and platform-specific apps
     if (app.availableOnBothPlatforms) {
       crossPlatformApps++;
-      // Count by detection method
-      if (app.crossPlatformMethod === "appId") {
-        crossPlatformMethods.appId++;
-      } else if (app.crossPlatformMethod === "title") {
-        crossPlatformMethods.title++;
-      }
     } else if (app.platform === "Apple App Store") {
       appleOnlyApps++;
     } else if (app.platform === "Google Play Store") {
@@ -68,6 +61,9 @@ export function printCombinedSummary(apps, logToFile) {
   logToFile(`  📱 Apple App Store only: ${appleOnlyApps} apps`);
   logToFile(`  🤖 Google Play Store only: ${googleOnlyApps} apps`);
   logToFile(`  🔄 Available on both platforms: ${crossPlatformApps} apps`);
+  logToFile(
+    "  ℹ️ Cross-platform entries are intentionally preserved as separate rows.",
+  );
 
   // Calculate cross-platform percentage
   const crossPlatformPercentage = (
@@ -76,15 +72,6 @@ export function printCombinedSummary(apps, logToFile) {
   ).toFixed(1);
   logToFile(
     `  📊 Cross-platform coverage: ${crossPlatformPercentage}% of apps`,
-  );
-
-  logToFile("\nCross-Platform Detection Methods:");
-  logToFile(`  🆔 Matched by AppId: ${crossPlatformMethods.appId} apps`);
-  logToFile(`  📝 Matched by Title: ${crossPlatformMethods.title} apps`);
-  logToFile(
-    `  🎯 Total detected: ${
-      crossPlatformMethods.appId + crossPlatformMethods.title
-    } apps`,
   );
 
   logToFile("\nBy Category:");
