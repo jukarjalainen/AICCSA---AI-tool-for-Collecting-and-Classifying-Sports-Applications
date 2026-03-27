@@ -11,9 +11,6 @@ import { GooglePlayScraper } from "./scrapers/GooglePlayScraper.js";
 import { combineAndDeduplicateApps } from "./modules/merger.js";
 import { printCombinedSummary } from "./modules/summary.js";
 import {
-  exportPlayStoreToJSON,
-  exportPlayStoreToCSV,
-  exportCombinedToJSON,
   exportCombinedToCSV,
   exportCombinedToXLSX,
 } from "./modules/exporters.js";
@@ -275,64 +272,11 @@ async function main() {
       const outputDir = "backend/output";
       await fs.mkdir(outputDir, { recursive: true });
 
-      // Create timestamped filenames
-      const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-      const jsonFilename = `${outputDir}/COMPLETE_sports_fitness_apps_${timestamp}.json`;
-      const csvFilename = `${outputDir}/COMPLETE_sports_fitness_apps_${timestamp}.csv`;
-      const xlsxFilename = `${outputDir}/COMPLETE_sports_fitness_apps_${timestamp}.xlsx`;
-      // Apple only
-      const appleJsonFilename = `${outputDir}/COMPLETE_appstore_sports_fitness_apps_${timestamp}.json`;
-      const appleCsvFilename = `${outputDir}/COMPLETE_appstore_sports_fitness_apps_${timestamp}.csv`;
-      // Google Play only
-      const playJsonFilename = `${outputDir}/COMPLETE_playstore_sports_fitness_apps_${timestamp}.json`;
-      const playCsvFilename = `${outputDir}/COMPLETE_playstore_sports_fitness_apps_${timestamp}.csv`;
+      const csvFilename = `${outputDir}/latest_scrape_output.csv`;
+      const xlsxFilename = `${outputDir}/latest_scrape_output.xlsx`;
 
-      // Export Apple App Store results
-      if (appStoreApps.length > 0) {
-        await exportCombinedToJSON(appStoreApps, appleJsonFilename, logToFile);
-        await exportCombinedToCSV(appStoreApps, appleCsvFilename, logToFile);
-        logToFile(`  - ${appleJsonFilename} (Apple App Store JSON)`);
-        logToFile(`  - ${appleCsvFilename} (Apple App Store CSV)`);
-      }
-      // Export Google Play Store results (all fields)
-      if (googlePlayApps.length > 0) {
-        await exportPlayStoreToJSON(
-          googlePlayApps,
-          playJsonFilename,
-          logToFile,
-        );
-        await exportPlayStoreToCSV(googlePlayApps, playCsvFilename, logToFile);
-        logToFile(`  - ${playJsonFilename} (Google Play Store JSON)`);
-        logToFile(`  - ${playCsvFilename} (Google Play Store CSV)`);
-      }
-
-      // Export combined files
-      await exportCombinedToJSON(combinedApps, jsonFilename, logToFile);
       await exportCombinedToCSV(combinedApps, csvFilename, logToFile);
-      if (scrapeOnly) {
-        await exportCombinedToXLSX(combinedApps, xlsxFilename, logToFile);
-        try {
-          await fs.copyFile(
-            csvFilename,
-            `${outputDir}/latest_scrape_output.csv`,
-          );
-        } catch (copyError) {
-          logToFile(
-            `⚠️ Could not update latest_scrape_output.csv: ${copyError.message}`,
-          );
-        }
-
-        try {
-          await fs.copyFile(
-            xlsxFilename,
-            `${outputDir}/latest_scrape_output.xlsx`,
-          );
-        } catch (copyError) {
-          logToFile(
-            `⚠️ Could not update latest_scrape_output.xlsx (file may be open): ${copyError.message}`,
-          );
-        }
-      }
+      await exportCombinedToXLSX(combinedApps, xlsxFilename, logToFile);
 
       if (!scrapeOnly) {
         await runOpenAIBatchClassifier({
@@ -348,11 +292,8 @@ async function main() {
 
       logToFile("\n✅ scraping completed successfully!");
       logToFile("📄 Files created:");
-      logToFile(`  - ${jsonFilename} (Combined JSON)`);
       logToFile(`  - ${csvFilename} (Combined CSV)`);
-      if (scrapeOnly) {
-        logToFile(`  - ${xlsxFilename} (Combined XLSX)`);
-      }
+      logToFile(`  - ${xlsxFilename} (Combined XLSX)`);
       logToFile(
         `\n🎯 Summary: Collected ${combinedApps.length} unique sports & fitness apps from both platforms`,
       );
