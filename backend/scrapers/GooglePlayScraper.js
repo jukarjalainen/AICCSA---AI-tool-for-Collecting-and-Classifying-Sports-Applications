@@ -16,8 +16,47 @@ export class GooglePlayScraper {
     try {
       let allApps = [];
       const targetCategories = ["SPORTS", "HEALTH_AND_FITNESS"];
+      const allowedCategoryIds = new Set(targetCategories);
       const targetCountries = this.countries;
       const { logToFile } = this;
+
+      const getCategoryIds = (app) => {
+        const ids = new Set();
+
+        const directGenreIds = [app?.genreId, app?.genreID, app?.appCategory]
+          .filter(Boolean)
+          .map((v) => String(v).trim().toUpperCase());
+        directGenreIds.forEach((id) => ids.add(id));
+
+        if (Array.isArray(app?.categories)) {
+          app.categories.forEach((cat) => {
+            const candidate =
+              typeof cat === "string"
+                ? cat
+                : cat?.id || cat?.genreId || cat?.genreID || cat?.name;
+            if (candidate) {
+              ids.add(String(candidate).trim().toUpperCase());
+            }
+          });
+        }
+
+        return [...ids];
+      };
+
+      const isAllowedNonGameCategory = (app) => {
+        const categoryIds = getCategoryIds(app);
+        const hasGameCategory = categoryIds.some((id) =>
+          id.startsWith("GAME_"),
+        );
+        const hasAllowedCategory = categoryIds.some((id) =>
+          allowedCategoryIds.has(id),
+        );
+        return {
+          isAllowed: hasAllowedCategory && !hasGameCategory,
+          categoryIds,
+          hasGameCategory,
+        };
+      };
 
       logToFile("🤖 Starting Google Play Store collection...");
 
@@ -65,8 +104,20 @@ export class GooglePlayScraper {
                 fullDetail: true, // Need full details for genre information
               });
 
+              const filteredListApps = listApps.filter((app) => {
+                const { isAllowed, categoryIds } =
+                  isAllowedNonGameCategory(app);
+                if (!isAllowed) {
+                  logToFile(
+                    `    🚫 PLAY STORE Filtered out from ${collection}: "${app.title}" (Categories: ${categoryIds.join("|") || "UNKNOWN"})`,
+                  );
+                }
+                return isAllowed;
+              });
+
               let newAppsCount = 0;
-              listApps.forEach((app) => {
+              filteredListApps.forEach((app) => {
+                const categoryIds = getCategoryIds(app);
                 if (
                   !allApps.find(
                     (existingApp) => existingApp.appId === app.appId,
@@ -79,7 +130,8 @@ export class GooglePlayScraper {
                     sourceCollection: collection,
                     sourceCountry: country,
                     targetCategory: category,
-                    actualGenre: app.genreID,
+                    actualGenre:
+                      categoryIds[0] || app.genreId || app.genreID || "",
                   });
                   newAppsCount++;
                 }
@@ -191,31 +243,20 @@ export class GooglePlayScraper {
 
             // Filter search results to only include SPORTS or HEALTH_AND_FITNESS category apps
             const filteredSearchApps = searchApps.filter((app) => {
-              const appGenreID = app.genreId;
-              const appGenre = app.genre;
-
-              // Only include apps that are explicitly in Sports or Health & Fitness categories
-              const isSportsGenre =
-                appGenreID === "SPORTS" || appGenre === "Sports";
-
-              const isHealthFitnessGenre =
-                appGenreID === "HEALTH_AND_FITNESS" ||
-                appGenre === "Health & Fitness";
-
-              const isValidCategory = isSportsGenre || isHealthFitnessGenre;
+              const { isAllowed, categoryIds } = isAllowedNonGameCategory(app);
 
               // Log filtered apps for debugging
-              if (!isValidCategory) {
+              if (!isAllowed) {
                 logToFile(
-                  `      🚫 PLAY STORE Filtered out (wrong genre): "${app.title}" (Genre: ${appGenre})`,
+                  `      🚫 PLAY STORE Filtered out (wrong genre): "${app.title}" (Categories: ${categoryIds.join("|") || "UNKNOWN"})`,
                 );
               } else {
                 logToFile(
-                  `      ✅ PLAY STORE Keeping: "${app.title}" (Genre: ${appGenre})`,
+                  `      ✅ PLAY STORE Keeping: "${app.title}" (Categories: ${categoryIds.join("|")})`,
                 );
               }
 
-              return isValidCategory;
+              return isAllowed;
             });
 
             const filteredOutCount =
@@ -228,6 +269,7 @@ export class GooglePlayScraper {
 
             let newSearchAppsCount = 0;
             filteredSearchApps.forEach((app) => {
+              const categoryIds = getCategoryIds(app);
               if (
                 !allApps.find((existingApp) => existingApp.appId === app.appId)
               ) {
@@ -238,7 +280,12 @@ export class GooglePlayScraper {
                   searchQuery: query,
                   sourceCountry: country,
                   targetCategory: "SPORTS_AND_HEALTH_AND_FITNESS",
-                  actualGenre: app.genreId || app.genre || "",
+                  actualGenre:
+                    categoryIds[0] ||
+                    app.genreId ||
+                    app.genreID ||
+                    app.genre ||
+                    "",
                 });
                 newSearchAppsCount++;
               }
