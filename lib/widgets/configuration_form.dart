@@ -161,7 +161,6 @@ class _ConfigurationFormState extends State<ConfigurationForm> {
                 contentPadding: EdgeInsets.zero,
                 dense: true,
                 title: const Text('Use essential keyword list'),
-                subtitle: const Text('Use backend searchQueries_essential.js'),
                 value: appState.configuration.useEssentialQueries,
                 onChanged: (value) {
                   appState.setUseEssentialQueries(value ?? false);
@@ -171,7 +170,7 @@ class _ConfigurationFormState extends State<ConfigurationForm> {
 
               // Countries Selection
               const Text(
-                'Countries',
+                'Countries (30 countries max, top markets)',
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
               ),
               const SizedBox(height: 8),
@@ -270,18 +269,12 @@ class _ConfigurationFormState extends State<ConfigurationForm> {
                   ),
                 ),
               ],
-              const SizedBox(height: 24),
-
-              const Text(
-                'Top Collections',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-              ),
               const SizedBox(height: 8),
               CheckboxListTile(
                 contentPadding: EdgeInsets.zero,
                 title: const Text('Search top collections'),
                 subtitle: const Text(
-                  'Search all top collections in SPORTS and HEALTH_AND_FITNESS for selected stores only.',
+                  'Search all top collections (without a search term) in SPORTS and HEALTH_AND_FITNESS for selected stores only.',
                 ),
                 value: appState.configuration.searchTopCollections,
                 onChanged: (value) {
@@ -292,7 +285,7 @@ class _ConfigurationFormState extends State<ConfigurationForm> {
                 contentPadding: EdgeInsets.zero,
                 title: const Text('Run scraping only (skip AI classification)'),
                 subtitle: const Text(
-                  'Export scraped app data to CSV/JSON and do not run OpenAIBatchClassifier.',
+                  'Export scraped app data to CSV/XLSX and do not run OpenAIBatchClassifier.',
                 ),
                 value: appState.configuration.scrapeOnly,
                 onChanged: (value) {
