@@ -20,7 +20,6 @@ const OUTPUT_COLUMNS = [
   "primaryGenreId",
   "developer",
   "developerId",
-  "developerInternalID",
   "installs",
   "minInstalls",
   "maxInstalls",
@@ -39,12 +38,54 @@ const OUTPUT_COLUMNS = [
   "contentRating",
   "released",
   "updated",
-  "version",
-  "url",
   "is_relevant",
   "purpose",
   "stakeholder",
   "sport_type",
+];
+
+const XLSX_SCHEMA_COLUMNS = [
+  "App_ID",
+  "App_Name",
+  "Is_relevant",
+  "Purpose",
+  "Stakeholder",
+  "Sport_Type",
+  "searchQuery",
+  "Platform_Technology",
+  "store",
+  "score_playStore",
+  "score_appStore",
+  "score_average",
+  "reviews_playStore",
+  "reviews_appStore",
+  "reviews_total",
+  "genres_appStore",
+  "genreIds_appStore",
+  "primaryGenre_appStore",
+  "primaryGenreId",
+  "genre_playStore",
+  "genreId_playStore",
+  "categories",
+  "contentRating",
+  "released",
+  "updated",
+  "price_playStore",
+  "price_appStore",
+  "currency",
+  "free",
+  "ratings",
+  "platform",
+  "platforms",
+  "availableOnBothPlatforms",
+  "crossPlatformMethod",
+  "crossPlatformAppIds",
+  "developer",
+  "developerId",
+  "sourceMethod",
+  "sourceCollection",
+  "targetCategory",
+  "sourceCountry",
 ];
 
 function buildOutputRow(app) {
@@ -64,7 +105,6 @@ function buildOutputRow(app) {
     primaryGenreId: app.primaryGenreId || "",
     developer: app.developer || "",
     developerId: app.developerId || "",
-    developerInternalID: app.developerInternalID || "",
     installs: app.installs || "",
     minInstalls: app.minInstalls || "",
     maxInstalls: app.maxInstalls || "",
@@ -83,13 +123,82 @@ function buildOutputRow(app) {
     contentRating: app.contentRating || "",
     released: app.released || "",
     updated: app.updated || "",
-    version: app.version || "",
-    url: app.url || "",
+
     // Filled during OpenAIBatchClassifier phase
     is_relevant: app.is_relevant ?? "",
     purpose: app.purpose ?? "",
     stakeholder: app.stakeholder ?? "",
     sport_type: app.sport_type ?? "",
+  };
+}
+
+function buildSchemaXlsxRow(app) {
+  const platform = app.platform || "";
+  const isPlayStore = /google play/i.test(platform);
+  const isAppStore = /apple app store/i.test(platform);
+  const playScore = isPlayStore ? (app.score ?? "") : "";
+  const appScore = isAppStore ? (app.score ?? "") : "";
+  const scoreAverage =
+    playScore !== "" && appScore !== ""
+      ? (Number(playScore) + Number(appScore)) / 2
+      : playScore !== ""
+        ? playScore
+        : appScore;
+  const playReviews = isPlayStore ? (app.ratings ?? app.reviews ?? "") : "";
+  const appReviews = isAppStore ? (app.reviews ?? "") : "";
+  const reviewsTotal =
+    playReviews !== "" || appReviews !== ""
+      ? Number(playReviews || 0) + Number(appReviews || 0)
+      : "";
+
+  return {
+    App_ID: app.id || app.appId || "",
+    App_Name: app.title || "",
+    Is_relevant: app.is_relevant ?? "",
+    Purpose: app.purpose ?? "",
+    Stakeholder: app.stakeholder ?? "",
+    Sport_Type: app.sport_type ?? "",
+    searchQuery: app.searchQuery || "",
+    Platform_Technology: platform,
+    store: platform,
+    score_playStore: playScore,
+    score_appStore: appScore,
+    score_average: scoreAverage,
+    reviews_playStore: playReviews,
+    reviews_appStore: appReviews,
+    reviews_total: reviewsTotal,
+    genres_appStore: app.genres || "",
+    genreIds_appStore: app.genreIds || "",
+    primaryGenre_appStore: app.primaryGenre || "",
+    primaryGenreId: app.primaryGenreId || "",
+    genre_playStore: app.genre || "",
+    genreId_playStore: app.genreId || "",
+    categories: Array.isArray(app.categories)
+      ? app.categories.map((c) => `${c.name}:${c.id}`).join("; ")
+      : app.categories || "",
+    contentRating: app.contentRating || "",
+    released: app.released || "",
+    updated: app.updated || "",
+    price_playStore: isPlayStore ? (app.price ?? "") : "",
+    price_appStore: isAppStore ? (app.price ?? "") : "",
+    currency: app.currency || "",
+    free: app.free != null ? (app.free ? "TRUE" : "FALSE") : "",
+    ratings: app.ratings || "",
+    platform,
+    platforms: Array.isArray(app.platforms)
+      ? app.platforms.join("; ")
+      : app.platforms || "",
+    availableOnBothPlatforms: app.availableOnBothPlatforms ? "TRUE" : "FALSE",
+    crossPlatformMethod: app.crossPlatformMethod || "",
+    crossPlatformAppIds: Array.isArray(app.crossPlatformAppIds)
+      ? app.crossPlatformAppIds.join("; ")
+      : app.crossPlatformAppIds || "",
+    developer: app.developer || "",
+    developerId: app.developerId || "",
+    sourceMethod: app.sourceMethod || "",
+    sourceCollection: app.sourceCollection || "",
+    targetCategory: app.targetCategory || "",
+    sourceCountry: app.sourceCountry || "",
   };
 }
 
@@ -122,7 +231,6 @@ export async function exportPlayStoreToJSON(apps, filename, logToFile) {
         androidMaxVersion: app.androidMaxVersion,
         developer: app.developer,
         developerId: app.developerId,
-        developerInternalID: app.developerInternalID,
         genre: app.genre,
         genreId: app.genreId,
         categories: app.categories,
@@ -131,7 +239,6 @@ export async function exportPlayStoreToJSON(apps, filename, logToFile) {
         adSupported: app.adSupported,
         released: app.released,
         updated: app.updated,
-        version: app.version,
         preregister: app.preregister,
         earlyAccessEnabled: app.earlyAccessEnabled,
         isAvailableInPlayPass: app.isAvailableInPlayPass,
@@ -401,12 +508,11 @@ export async function exportCombinedToCSV(apps, filename, logToFile) {
  */
 export async function exportCombinedToXLSX(apps, filename, logToFile) {
   try {
-    const titleRow = ["AICCSA Sports & Fitness Apps"];
     const dataRows = apps.map((app) => {
-      const rowObj = buildOutputRow(app);
-      return OUTPUT_COLUMNS.map((column) => rowObj[column] ?? "");
+      const rowObj = buildSchemaXlsxRow(app);
+      return XLSX_SCHEMA_COLUMNS.map((column) => rowObj[column] ?? "");
     });
-    const worksheetData = [titleRow, OUTPUT_COLUMNS, ...dataRows];
+    const worksheetData = [XLSX_SCHEMA_COLUMNS, ...dataRows];
 
     const workbook = XLSX.utils.book_new();
     const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);

@@ -311,11 +311,27 @@ async function main() {
       await exportCombinedToCSV(combinedApps, csvFilename, logToFile);
       if (scrapeOnly) {
         await exportCombinedToXLSX(combinedApps, xlsxFilename, logToFile);
-        await fs.copyFile(csvFilename, `${outputDir}/latest_scrape_output.csv`);
-        await fs.copyFile(
-          xlsxFilename,
-          `${outputDir}/latest_scrape_output.xlsx`,
-        );
+        try {
+          await fs.copyFile(
+            csvFilename,
+            `${outputDir}/latest_scrape_output.csv`,
+          );
+        } catch (copyError) {
+          logToFile(
+            `⚠️ Could not update latest_scrape_output.csv: ${copyError.message}`,
+          );
+        }
+
+        try {
+          await fs.copyFile(
+            xlsxFilename,
+            `${outputDir}/latest_scrape_output.xlsx`,
+          );
+        } catch (copyError) {
+          logToFile(
+            `⚠️ Could not update latest_scrape_output.xlsx (file may be open): ${copyError.message}`,
+          );
+        }
       }
 
       if (!scrapeOnly) {
