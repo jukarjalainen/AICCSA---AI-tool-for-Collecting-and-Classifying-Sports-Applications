@@ -296,11 +296,9 @@ class _HomePageState extends State<HomePage> {
           bottomNavigationBar: BottomNavigationBar(
             currentIndex: _currentTabIndex,
             onTap: (index) {
-              if (!appState.progress.isProcessing) {
-                setState(() {
-                  _currentTabIndex = index;
-                });
-              }
+              setState(() {
+                _currentTabIndex = index;
+              });
             },
             items: const [
               BottomNavigationBarItem(

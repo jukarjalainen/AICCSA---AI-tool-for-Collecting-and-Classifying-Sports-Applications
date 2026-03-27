@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'dart:io';
-import '../providers/app_state_provider.dart';
 
 class ResultsDisplay extends StatefulWidget {
   const ResultsDisplay({Key? key}) : super(key: key);
@@ -169,6 +167,7 @@ class _ResultsDisplayState extends State<ResultsDisplay> {
   Widget _buildResultsTable() {
     final headers = _csvData.isNotEmpty ? _csvData.first : [];
     final rows = _csvData.length > 1 ? _csvData.sublist(1) : [];
+    final columnCount = headers.length;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -196,10 +195,19 @@ class _ResultsDisplayState extends State<ResultsDisplay> {
                     ),
                   )
                   .toList(),
-              rows: rows.take(50).map((row) {
+              rows: rows.take(50).map<DataRow>((row) {
+                final normalizedRow = List<String>.from(row);
+                if (normalizedRow.length < columnCount) {
+                  normalizedRow.addAll(
+                    List<String>.filled(columnCount - normalizedRow.length, ''),
+                  );
+                } else if (normalizedRow.length > columnCount) {
+                  normalizedRow.removeRange(columnCount, normalizedRow.length);
+                }
+
                 return DataRow(
-                  cells: row
-                      .map(
+                  cells: normalizedRow
+                      .map<DataCell>(
                         (cell) => DataCell(
                           Text(cell.trim(), overflow: TextOverflow.ellipsis),
                         ),
