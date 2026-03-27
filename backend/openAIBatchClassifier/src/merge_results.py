@@ -1,7 +1,7 @@
 import os, json, pandas as pd
 import shutil
 from datetime import datetime
-from . import config, read_table
+from . import config
 
 def _extract_json_array(content: str):
     content = (content or "").strip()
@@ -38,16 +38,76 @@ def parse_batch_output(output_files: list[str]):
                     continue
     return pd.DataFrame.from_records(records)
 
+
+def _load_table(path: str):
+    ext = os.path.splitext(path)[1].lower()
+    if ext == ".csv":
+        return pd.read_csv(path)
+    if ext in (".xlsx", ".xls"):
+        return pd.read_excel(path)
+    raise ValueError(f"Unsupported input file extension: {ext}")
+
+
+def _resolve_column(df: pd.DataFrame, candidates: list[str]):
+    lowered = {c.lower(): c for c in df.columns}
+    for candidate in candidates:
+        resolved = lowered.get(candidate.lower())
+        if resolved:
+            return resolved
+    return None
+
+
+def _canonical_platform(value: str):
+    raw = (value or "").strip().lower()
+    if "android" in raw or "google" in raw:
+        return "Android"
+    if "ios" in raw or "apple" in raw:
+        return "iOS"
+    return ""
+
+
+def _resolve_classification_columns(df: pd.DataFrame):
+    return {
+        "is_relevant": _resolve_column(df, ["is_relevant", "Is_relevant"]),
+        "purpose": _resolve_column(df, ["purpose", "Purpose"]),
+        "stakeholder": _resolve_column(df, ["stakeholder", "Stakeholder"]),
+        "sport_type": _resolve_column(df, ["sport_type", "Sport_Type"]),
+    }
+
 def merge_to_csv(input_file: str, output_files: list[str]):
-    base = read_table.read_app_table(input_file=input_file, ids_only=False)
+    base = _load_table(input_file)
+    schema_cols = list(base.columns)
     preds = parse_batch_output(output_files)
+
+    id_col = _resolve_column(base, ["id", "appId", "app_id", "App_ID"])
+    platform_col = _resolve_column(
+        base,
+        ["platform", "store", "targetStore", "Platform_Technology"],
+    )
+    app_id_col = _resolve_column(base, ["appId", "app_id", "App_ID"])
+
+    if not id_col:
+        raise KeyError("Input file is missing an app id column (e.g., id/appId/App_ID).")
+
+    base_work = base.copy()
+    base_work["__merge_id"] = base_work[id_col].fillna("").astype(str).str.strip()
+    if app_id_col:
+        fallback_ids = base_work[app_id_col].fillna("").astype(str).str.strip()
+        base_work["__merge_id"] = base_work["__merge_id"].where(
+            base_work["__merge_id"] != "",
+            fallback_ids,
+        )
+    if platform_col:
+        base_work["__merge_platform"] = (
+            base_work[platform_col].fillna("").astype(str).map(_canonical_platform)
+        )
+    else:
+        base_work["__merge_platform"] = ""
 
     # normalize
     for col in ("id", "platform"):
-        if col in base.columns:
-            base[col] = base[col].astype(str).str.strip()
         if col in preds.columns:
-            preds[col] = preds[col].astype(str).str.strip()
+            preds[col] = preds[col].fillna("").astype(str).str.strip()
 
     for c in ("athlete", "support_staff", "supporter", "governing_entity", "not_relevant"):
         if c in preds.columns:
@@ -78,26 +138,57 @@ def merge_to_csv(input_file: str, output_files: list[str]):
     if "purpose" not in preds.columns:
         preds["purpose"] = ""
 
-    keep = [c for c in ["id", "platform", "is_relevant", "purpose", "stakeholder", "sport_type"] if c in preds.columns]
+    target_cols = ["is_relevant", "purpose", "stakeholder", "sport_type"]
+    schema_target_cols = _resolve_classification_columns(base_work)
+
+    keep = [c for c in ["id", "platform", *target_cols] if c in preds.columns]
     preds = preds[keep]
+    if "id" not in preds.columns:
+        raise KeyError("Batch predictions are missing required 'id' field.")
 
-    merged = base.merge(preds, on=["id","platform"], how="left")
+    preds["__merge_id"] = preds["id"].fillna("").astype(str).str.strip()
+    if "platform" in preds.columns:
+        preds["__merge_platform"] = preds["platform"].fillna("").astype(str).map(_canonical_platform)
 
-    for c in ("is_relevant", "purpose", "stakeholder", "sport_type"):
-        if c not in merged.columns:
-            merged[c] = ""
-        merged[c] = merged[c].fillna("")
+    join_keys = ["__merge_id", "__merge_platform"] if "platform" in preds.columns else ["__merge_id"]
+    preds = preds.drop_duplicates(subset=join_keys, keep="first")
+
+    # Keep the original scraper schema and only update classification values.
+    pred_updates = preds.rename(columns={c: f"{c}__new" for c in target_cols if c in preds.columns})
+    merged = base_work.merge(pred_updates, on=join_keys, how="left")
+
+    for logical_col, schema_col in schema_target_cols.items():
+        if not schema_col:
+            continue
+        merged[schema_col] = merged[schema_col].fillna("").astype(str)
+        new_col = f"{logical_col}__new"
+        if new_col in merged.columns:
+            merged[new_col] = merged[new_col].fillna("").astype(str)
+            update_mask = merged[new_col].str.strip() != ""
+            merged.loc[update_mask, schema_col] = merged.loc[update_mask, new_col]
+            merged.drop(columns=[new_col], inplace=True)
+
+    merged = merged.drop(columns=["__merge_id", "__merge_platform"], errors="ignore")
+    merged = merged[schema_cols]
 
     # ---- timestamped output name: YYYY-DD-MM_HHMM ----
     ts = datetime.now().strftime("%Y-%d-%m_%H%M")  # year-day-month_hourminute
-    out_name = f"apps_with_classification_{ts}.csv"
+    out_name = f"apps_with_classification_{ts}.xlsx"
     out_path = os.path.join(config.OUT_DIR, out_name)
 
-    merged.to_csv(out_path, index=False)
-    shutil.copyfile(out_path, config.LATEST_CLASSIFIED_CSV)
-    print("Wrote:", config.LATEST_CLASSIFIED_CSV)
+    merged.to_excel(out_path, index=False)
+    final_path = out_path
+    try:
+        shutil.copyfile(out_path, config.LATEST_CLASSIFIED_XLSX)
+        final_path = config.LATEST_CLASSIFIED_XLSX
+        print("Wrote:", config.LATEST_CLASSIFIED_XLSX)
+    except PermissionError:
+        print(
+            "Warning: latest_classified.xlsx is locked; "
+            "using timestamped output file instead."
+        )
     print("Wrote:", out_path)
-    return config.LATEST_CLASSIFIED_CSV
+    return final_path
 
 if __name__ == "__main__":
     merge_to_csv(config.DATA_FILE, [f"{config.BATCH_OUTPUT_JSONL}1"])

@@ -29,6 +29,17 @@ class _ResultsDisplayState extends State<ResultsDisplay> {
 
       final file = await _resolveLatestResultsFile();
       if (await file.exists()) {
+        if (file.path.toLowerCase().endsWith('.xlsx')) {
+          setState(() {
+            _csvData = [];
+            _loadedFilePath = file.path;
+            _errorMessage =
+                'Loaded XLSX results at ${file.path}. Table preview currently supports CSV text only.';
+            _isLoading = false;
+          });
+          return;
+        }
+
         final content = await file.readAsString();
         final lines = content.split('\n');
         final data = lines
@@ -58,7 +69,7 @@ class _ResultsDisplayState extends State<ResultsDisplay> {
 
   Future<File> _resolveLatestResultsFile() async {
     final stableFile = File(
-      'backend/openAIBatchClassifier/out/latest_classified.csv',
+      'backend/openAIBatchClassifier/out/latest_classified.xlsx',
     );
     if (await stableFile.exists()) {
       return stableFile;
@@ -72,7 +83,7 @@ class _ResultsDisplayState extends State<ResultsDisplay> {
             (e) =>
                 e is File &&
                 e.path.toLowerCase().contains('apps_with_classification_') &&
-                e.path.toLowerCase().endsWith('.csv'),
+                e.path.toLowerCase().endsWith('.xlsx'),
           )
           .cast<File>()
           .toList();
@@ -238,7 +249,7 @@ class _ResultsDisplayState extends State<ResultsDisplay> {
     try {
       final path =
           _loadedFilePath ??
-          'backend/openAIBatchClassifier/out/latest_classified.csv or backend/output/latest_scrape_output.xlsx';
+          'backend/openAIBatchClassifier/out/latest_classified.xlsx or backend/output/latest_scrape_output.xlsx';
       final file = _loadedFilePath != null ? File(_loadedFilePath!) : null;
       if (file != null && await file.exists()) {
         // In a real app, you might use path_provider to get a suitable export location

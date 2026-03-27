@@ -2,6 +2,12 @@ import json
 from . import config
 from .utils import ensure_dir, read_jsonl, chunks
 
+
+def _supports_explicit_temperature(model: str) -> bool:
+    normalized = (model or "").strip().lower()
+    # GPT-5 chat completions currently require default temperature handling.
+    return not normalized.startswith("gpt-5")
+
 def load_prompt_text():
     with open(config.PROMPT_FILE, "r", encoding="utf-8") as f:
         return f.read().strip()
@@ -41,21 +47,25 @@ def build_batch_input():
                     for r in group
                 ]
                 custom_id = f"chunk_{global_chunk_idx:05d}"
+                body = {
+                    "model": config.MODEL,
+                    "messages": [
+                        {"role": "system", "content": prompt},
+                        {
+                            "role": "user",
+                            "content": json.dumps(payload, ensure_ascii=False),
+                        },
+                    ],
+                }
+
+                if _supports_explicit_temperature(config.MODEL):
+                    body["temperature"] = config.TEMPERATURE
+
                 line = {
                     "custom_id": custom_id,
                     "method": "POST",
                     "url": "/v1/chat/completions",
-                    "body": {
-                        "model": config.MODEL,
-                        "temperature": config.TEMPERATURE,
-                        "messages": [
-                            {"role": "system", "content": prompt},
-                            {
-                                "role": "user",
-                                "content": json.dumps(payload, ensure_ascii=False),
-                            },
-                        ],
-                    },
+                    "body": body,
                 }
                 f.write(json.dumps(line, ensure_ascii=False) + "\n")
                 global_chunk_idx += 1
