@@ -151,3 +151,6 @@ app-store-scraper/*.txt
 # Node modules
 node_modules/
 **/node_modules/
+backend/openAIBatchClassifier/out/batch_input.jsonl1
+backend/openAIBatchClassifier/out/batch_output.jsonl1
+backend/openAIBatchClassifier/out/descriptions.jsonl

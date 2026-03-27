@@ -3,6 +3,7 @@
  * Runs both store scrapers, merges/deduplicates results, exports files, and writes logs.
  */
 import fs from "fs/promises";
+import path from "path";
 import { spawn } from "child_process";
 import { countriesEssential } from "./lists/countries_essential.js";
 import { searchQueriesEssential } from "./lists/searchQueries_essential.js";
@@ -127,7 +128,28 @@ async function saveLogFile() {
   }
 }
 
-function runOpenAIBatchClassifier({ inputFile, model, apiKey }) {
+async function resolvePythonExecutable() {
+  const candidates = [
+    process.env.AICCSA_PYTHON,
+    path.join(process.cwd(), ".venv", "Scripts", "python.exe"),
+    path.join(process.cwd(), ".venv", "bin", "python"),
+  ].filter(Boolean);
+
+  for (const candidate of candidates) {
+    try {
+      await fs.access(candidate);
+      return candidate;
+    } catch {
+      // Try next candidate.
+    }
+  }
+
+  return "python";
+}
+
+async function runOpenAIBatchClassifier({ inputFile, model, apiKey }) {
+  const pythonExecutable = await resolvePythonExecutable();
+
   return new Promise((resolve, reject) => {
     const args = [
       "-m",
@@ -141,7 +163,8 @@ function runOpenAIBatchClassifier({ inputFile, model, apiKey }) {
     }
 
     logToFile("\n🤖 Starting OpenAI batch classification pipeline...");
-    const child = spawn("python", args, {
+    logToFile(`🐍 Using Python executable: ${pythonExecutable}`);
+    const child = spawn(pythonExecutable, args, {
       cwd: process.cwd(),
       env: {
         ...process.env,
@@ -282,7 +305,7 @@ async function main() {
 
       if (!scrapeOnly) {
         await runOpenAIBatchClassifier({
-          inputFile: csvFilename,
+          inputFile: xlsxFilename,
           model: selectedModel,
           apiKey,
         });

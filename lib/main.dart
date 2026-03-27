@@ -240,7 +240,7 @@ class _HomePageState extends State<HomePage> {
       appState.updateProgress(
         appState.progress.copyWith(
           stage: 'merging',
-          message: 'Merging classification into final CSV...',
+          message: 'Merging classification into final XLSX...',
           progress: 0.95,
         ),
       );

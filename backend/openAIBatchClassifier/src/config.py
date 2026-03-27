@@ -15,7 +15,7 @@ DESCRIPTIONS_JSONL = os.path.join(OUT_DIR, "descriptions.jsonl")
 BATCH_INPUT_JSONL = os.path.join(OUT_DIR, "batch_input.jsonl")
 BATCH_OUTPUT_JSONL = os.path.join(OUT_DIR, "batch_output.jsonl")
 OUTPUT_XLSX = os.path.join(OUT_DIR, "apps_with_classification.xlsx")
-LATEST_CLASSIFIED_CSV = os.path.join(OUT_DIR, "latest_classified.csv")
+LATEST_CLASSIFIED_XLSX = os.path.join(OUT_DIR, "latest_classified.xlsx")
 BATCH_STATUS_FILE = os.path.join(BACKEND_ROOT, "batch_status.json")
 
 # ---------- Model / Batch ----------
