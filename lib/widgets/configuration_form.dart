@@ -124,6 +124,7 @@ class _ConfigurationFormState extends State<ConfigurationForm> {
                   Expanded(
                     child: TextField(
                       controller: _keywordsController,
+                      enabled: !appState.configuration.useEssentialQueries,
                       decoration: InputDecoration(
                         hintText:
                             'Enter keywords (comma-separated) or select a file',
@@ -142,7 +143,9 @@ class _ConfigurationFormState extends State<ConfigurationForm> {
                   ),
                   const SizedBox(width: 8),
                   ElevatedButton.icon(
-                    onPressed: _pickKeywordsFile,
+                    onPressed: appState.configuration.useEssentialQueries
+                        ? null
+                        : _pickKeywordsFile,
                     icon: const Icon(Icons.folder_open),
                     label: const Text('Browse'),
                     style: ElevatedButton.styleFrom(
@@ -154,11 +157,20 @@ class _ConfigurationFormState extends State<ConfigurationForm> {
                   ),
                 ],
               ),
+              CheckboxListTile(
+                contentPadding: EdgeInsets.zero,
+                dense: true,
+                title: const Text('Use essential keyword list'),
+                value: appState.configuration.useEssentialQueries,
+                onChanged: (value) {
+                  appState.setUseEssentialQueries(value ?? false);
+                },
+              ),
               const SizedBox(height: 24),
 
               // Countries Selection
               const Text(
-                'Countries',
+                'Countries (30 countries max, top markets)',
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
               ),
               const SizedBox(height: 8),
@@ -257,22 +269,27 @@ class _ConfigurationFormState extends State<ConfigurationForm> {
                   ),
                 ),
               ],
-              const SizedBox(height: 24),
-
-              const Text(
-                'Top Collections',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-              ),
               const SizedBox(height: 8),
               CheckboxListTile(
                 contentPadding: EdgeInsets.zero,
                 title: const Text('Search top collections'),
                 subtitle: const Text(
-                  'Search all top collections in SPORTS and HEALTH_AND_FITNESS for selected stores only.',
+                  'Search all top collections (without a search term) in SPORTS and HEALTH_AND_FITNESS for selected stores only.',
                 ),
                 value: appState.configuration.searchTopCollections,
                 onChanged: (value) {
                   appState.setSearchTopCollections(value ?? false);
+                },
+              ),
+              CheckboxListTile(
+                contentPadding: EdgeInsets.zero,
+                title: const Text('Run scraping only (skip AI classification)'),
+                subtitle: const Text(
+                  'Export scraped app data to CSV/XLSX and do not run OpenAIBatchClassifier.',
+                ),
+                value: appState.configuration.scrapeOnly,
+                onChanged: (value) {
+                  appState.setScrapeOnly(value ?? false);
                 },
               ),
               const SizedBox(height: 24),
@@ -295,6 +312,10 @@ class _ConfigurationFormState extends State<ConfigurationForm> {
                   ),
                 ),
                 items: const [
+                  DropdownMenuItem(
+                    value: 'gpt-5-mini',
+                    child: Text('GPT-5 Mini'),
+                  ),
                   DropdownMenuItem(value: 'gpt-4', child: Text('GPT-4')),
                   DropdownMenuItem(
                     value: 'gpt-4-turbo',

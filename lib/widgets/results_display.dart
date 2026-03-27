@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'dart:io';
-import '../providers/app_state_provider.dart';
 
 class ResultsDisplay extends StatefulWidget {
   const ResultsDisplay({Key? key}) : super(key: key);
@@ -14,6 +12,7 @@ class _ResultsDisplayState extends State<ResultsDisplay> {
   List<List<String>> _csvData = [];
   bool _isLoading = true;
   String? _errorMessage;
+  String? _loadedFilePath;
 
   @override
   void initState() {
@@ -28,8 +27,7 @@ class _ResultsDisplayState extends State<ResultsDisplay> {
         _errorMessage = null;
       });
 
-      // Try to load the final CSV file
-      final file = File('backend/output/final_classified_apps.csv');
+      final file = await _resolveLatestResultsFile();
       if (await file.exists()) {
         final content = await file.readAsString();
         final lines = content.split('\n');
@@ -40,11 +38,13 @@ class _ResultsDisplayState extends State<ResultsDisplay> {
 
         setState(() {
           _csvData = data;
+          _loadedFilePath = file.path;
           _isLoading = false;
         });
       } else {
         setState(() {
-          _errorMessage = 'Results file not found. Run processing first.';
+          _errorMessage =
+              'Results file not found. Run processing first to generate classification output.';
           _isLoading = false;
         });
       }
@@ -54,6 +54,67 @@ class _ResultsDisplayState extends State<ResultsDisplay> {
         _isLoading = false;
       });
     }
+  }
+
+  Future<File> _resolveLatestResultsFile() async {
+    final stableFile = File(
+      'backend/openAIBatchClassifier/out/latest_classified.csv',
+    );
+    if (await stableFile.exists()) {
+      return stableFile;
+    }
+
+    final outDir = Directory('backend/openAIBatchClassifier/out');
+    if (await outDir.exists()) {
+      final entries = await outDir
+          .list()
+          .where(
+            (e) =>
+                e is File &&
+                e.path.toLowerCase().contains('apps_with_classification_') &&
+                e.path.toLowerCase().endsWith('.csv'),
+          )
+          .cast<File>()
+          .toList();
+
+      if (entries.isNotEmpty) {
+        entries.sort((a, b) {
+          final aTime = a.statSync().modified;
+          final bTime = b.statSync().modified;
+          return bTime.compareTo(aTime);
+        });
+        return entries.first;
+      }
+    }
+
+    final scrapeOutDir = Directory('backend/output');
+    if (await scrapeOutDir.exists()) {
+      final scrapeCsvEntries = await scrapeOutDir
+          .list()
+          .where(
+            (e) =>
+                e is File &&
+                (e.path.toLowerCase().contains('scrape_output_csv_') ||
+                    e.path.toLowerCase().contains(
+                      'complete_sports_fitness_apps_',
+                    ) ||
+                    e.path.toLowerCase().contains('latest_scrape_output')) &&
+                e.path.toLowerCase().endsWith('.csv'),
+          )
+          .cast<File>()
+          .toList();
+
+      if (scrapeCsvEntries.isNotEmpty) {
+        scrapeCsvEntries.sort((a, b) {
+          final aTime = a.statSync().modified;
+          final bTime = b.statSync().modified;
+          return bTime.compareTo(aTime);
+        });
+        return scrapeCsvEntries.first;
+      }
+    }
+
+    return File('backend/output/final_classified_apps.csv');
   }
 
   @override
@@ -106,6 +167,7 @@ class _ResultsDisplayState extends State<ResultsDisplay> {
   Widget _buildResultsTable() {
     final headers = _csvData.isNotEmpty ? _csvData.first : [];
     final rows = _csvData.length > 1 ? _csvData.sublist(1) : [];
+    final columnCount = headers.length;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -133,10 +195,19 @@ class _ResultsDisplayState extends State<ResultsDisplay> {
                     ),
                   )
                   .toList(),
-              rows: rows.take(50).map((row) {
+              rows: rows.take(50).map<DataRow>((row) {
+                final normalizedRow = List<String>.from(row);
+                if (normalizedRow.length < columnCount) {
+                  normalizedRow.addAll(
+                    List<String>.filled(columnCount - normalizedRow.length, ''),
+                  );
+                } else if (normalizedRow.length > columnCount) {
+                  normalizedRow.removeRange(columnCount, normalizedRow.length);
+                }
+
                 return DataRow(
-                  cells: row
-                      .map(
+                  cells: normalizedRow
+                      .map<DataCell>(
                         (cell) => DataCell(
                           Text(cell.trim(), overflow: TextOverflow.ellipsis),
                         ),
@@ -165,15 +236,18 @@ class _ResultsDisplayState extends State<ResultsDisplay> {
 
   Future<void> _exportResults() async {
     try {
-      final file = File('backend/output/final_classified_apps.csv');
-      if (await file.exists()) {
+      final path =
+          _loadedFilePath ??
+          'backend/openAIBatchClassifier/out/latest_classified.csv or backend/output/latest_scrape_output.xlsx';
+      final file = _loadedFilePath != null ? File(_loadedFilePath!) : null;
+      if (file != null && await file.exists()) {
         // In a real app, you might use path_provider to get a suitable export location
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Results available at: $path')));
+      } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Results saved to: backend/output/final_classified_apps.csv',
-            ),
-          ),
+          SnackBar(content: Text('No result file is currently loaded.')),
         );
       }
     } catch (e) {

@@ -6,9 +6,11 @@ class AppStateProvider with ChangeNotifier {
   AppConfiguration _configuration = AppConfiguration(
     targetStore: 'google_play',
     keywords: '',
+    useEssentialQueries: false,
     countries: ['US'],
     searchTopCollections: false,
-    llmModel: 'gpt-4',
+    scrapeOnly: false,
+    llmModel: 'gpt-5-mini',
   );
 
   ProcessProgress _progress = ProcessProgress();
@@ -72,18 +74,22 @@ class AppStateProvider with ChangeNotifier {
       final prefs = await SharedPreferences.getInstance();
       final targetStore = prefs.getString('targetStore') ?? 'google_play';
       final keywords = prefs.getString('keywords') ?? '';
+      final useEssentialQueries = prefs.getBool('useEssentialQueries') ?? false;
       final countries = prefs.getStringList('countries') ?? ['US'];
       final collection = prefs.getString('collection');
       final searchTopCollections =
           prefs.getBool('searchTopCollections') ?? false;
-      final llmModel = prefs.getString('llmModel') ?? 'gpt-4';
+      final scrapeOnly = prefs.getBool('scrapeOnly') ?? false;
+      final llmModel = prefs.getString('llmModel') ?? 'gpt-5-mini';
 
       _configuration = AppConfiguration(
         targetStore: targetStore,
         keywords: keywords,
+        useEssentialQueries: useEssentialQueries,
         countries: countries,
         collection: collection,
         searchTopCollections: searchTopCollections,
+        scrapeOnly: scrapeOnly,
         llmModel: llmModel,
       );
       notifyListeners();
@@ -101,11 +107,13 @@ class AppStateProvider with ChangeNotifier {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('targetStore', config.targetStore);
       await prefs.setString('keywords', config.keywords);
+      await prefs.setBool('useEssentialQueries', config.useEssentialQueries);
       await prefs.setStringList('countries', config.countries);
       if (config.collection != null) {
         await prefs.setString('collection', config.collection!);
       }
       await prefs.setBool('searchTopCollections', config.searchTopCollections);
+      await prefs.setBool('scrapeOnly', config.scrapeOnly);
       await prefs.setString('llmModel', config.llmModel);
     } catch (e) {
       debugPrint('Error saving configuration: $e');
@@ -144,6 +152,11 @@ class AppStateProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  void setUseEssentialQueries(bool enabled) {
+    _configuration = _configuration.copyWith(useEssentialQueries: enabled);
+    notifyListeners();
+  }
+
   // Update countries
   void setCountries(List<String> countries) {
     _configuration = _configuration.copyWith(countries: countries);
@@ -158,6 +171,11 @@ class AppStateProvider with ChangeNotifier {
 
   void setSearchTopCollections(bool enabled) {
     _configuration = _configuration.copyWith(searchTopCollections: enabled);
+    notifyListeners();
+  }
+
+  void setScrapeOnly(bool enabled) {
+    _configuration = _configuration.copyWith(scrapeOnly: enabled);
     notifyListeners();
   }
 
@@ -211,9 +229,11 @@ class AppStateProvider with ChangeNotifier {
     _configuration = AppConfiguration(
       targetStore: 'google_play',
       keywords: '',
+      useEssentialQueries: false,
       countries: ['US'],
       searchTopCollections: false,
-      llmModel: 'gpt-4',
+      scrapeOnly: false,
+      llmModel: 'gpt-5-mini',
     );
     _progress = ProcessProgress();
     _apiKey = null;

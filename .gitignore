@@ -147,3 +147,7 @@ app-store-scraper/*.json
 # TXT files in scraper directories
 google-play-scraper/*.txt
 app-store-scraper/*.txt
+
+# Node modules
+node_modules/
+**/node_modules/

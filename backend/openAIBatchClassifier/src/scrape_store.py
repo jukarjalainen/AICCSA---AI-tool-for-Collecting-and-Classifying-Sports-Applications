@@ -59,7 +59,7 @@ def get_desc_ios(app_id: str, cache: dict) -> str:
 def run_scrape():
     """Main entry point: gather descriptions for apps listed in the source table."""
     ensure_dir(config.OUT_DIR)
-    df = read_table.read_app_table()
+    df = read_table.read_app_table(input_path=config.DATA_FILE, ids_only=True)
     rows = df.to_dict(orient="records")
 
     cache = _load_cache()

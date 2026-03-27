@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -45,6 +46,7 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   int _currentTabIndex = 0;
   Process? _currentProcess;
+  StreamSubscription<Map<String, dynamic>>? _batchStatusSubscription;
 
   @override
   void initState() {
@@ -69,7 +71,7 @@ class _HomePageState extends State<HomePage> {
       return;
     }
 
-    if (config.keywords.isEmpty) {
+    if (!config.useEssentialQueries && config.keywords.isEmpty) {
       _showErrorSnackBar('Please enter keywords or select a file');
       return;
     }
@@ -79,7 +81,8 @@ class _HomePageState extends State<HomePage> {
       return;
     }
 
-    if (appState.apiKey == null || appState.apiKey!.isEmpty) {
+    if (!config.scrapeOnly &&
+        (appState.apiKey == null || appState.apiKey!.isEmpty)) {
       _showErrorSnackBar('Please enter your OpenAI API key');
       return;
     }
@@ -98,9 +101,11 @@ class _HomePageState extends State<HomePage> {
       _currentProcess = await ProcessService.startProcessing(
         targetStore: config.targetStore,
         keywords: config.keywords,
+        useEssentialQueries: config.useEssentialQueries,
         countries: config.countries,
         llmModel: config.llmModel,
         searchTopCollections: config.searchTopCollections,
+        scrapeOnly: config.scrapeOnly,
         apiKey: appState.apiKey,
       );
 
@@ -115,8 +120,44 @@ class _HomePageState extends State<HomePage> {
         debugPrint('[Error] $line');
       });
 
+      if (!config.scrapeOnly) {
+        _batchStatusSubscription?.cancel();
+        _batchStatusSubscription = ProcessService.pollBatchStatus().listen((
+          status,
+        ) {
+          final batches = (status['batches'] as List<dynamic>? ?? []);
+          final batchIds = batches
+              .map(
+                (b) => b is Map<String, dynamic>
+                    ? (b['batchId']?.toString() ?? '')
+                    : '',
+              )
+              .where((id) => id.isNotEmpty)
+              .toList();
+
+          if (batchIds.isNotEmpty || status['status'] == 'error') {
+            final stage = status['stage']?.toString();
+            final mappedStage =
+                stage == 'uploading' || stage == 'polling' || stage == 'merging'
+                ? stage
+                : appState.progress.stage;
+            appState.updateProgress(
+              appState.progress.copyWith(
+                stage: mappedStage,
+                batchIds: batchIds,
+                message: status['status'] == 'error'
+                    ? 'Batch status reported an error'
+                    : appState.progress.message,
+              ),
+            );
+          }
+        });
+      }
+
       // Wait for process to complete
       final exitCode = await _currentProcess!.exitCode;
+      await _batchStatusSubscription?.cancel();
+      _batchStatusSubscription = null;
       if (exitCode == 0) {
         appState.updateProgress(
           appState.progress.copyWith(
@@ -148,45 +189,59 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _updateProgressFromOutput(String line, AppStateProvider appState) {
-    // Parse output from Python backend to update progress
-    // This is a simplified version - adjust based on actual format
-    if (line.contains('scraping')) {
+    final lower = line.toLowerCase();
+
+    if (lower.contains('starting parallel scraping') ||
+        lower.contains('starting apple app store collection') ||
+        lower.contains('starting google play store collection')) {
       appState.updateProgress(
         appState.progress.copyWith(
           stage: 'scraping',
           message: 'Scraping app store data...',
         ),
       );
-    } else if (line.contains('chunking')) {
+    } else if (lower.contains('[batch] scrape-descriptions')) {
       appState.updateProgress(
         appState.progress.copyWith(
-          stage: 'chunking',
-          message: 'Processing data chunks...',
+          stage: 'scraping',
+          message: 'Fetching app descriptions by appId...',
           progress: 0.2,
         ),
       );
-    } else if (line.contains('uploading')) {
+    } else if (lower.contains('[batch] build-input') ||
+        lower.contains('wrote batch input:')) {
+      appState.updateProgress(
+        appState.progress.copyWith(
+          stage: 'chunking',
+          message: 'Building OpenAI batch input chunks...',
+          progress: 0.45,
+        ),
+      );
+    } else if (lower.contains('[batch] submit-openai') ||
+        lower.contains('batch submitted:')) {
       appState.updateProgress(
         appState.progress.copyWith(
           stage: 'uploading',
-          message: 'Uploading to OpenAI Batch API...',
-          progress: 0.4,
+          message: 'Submitting chunks to OpenAI Batch API...',
+          progress: 0.65,
         ),
       );
-    } else if (line.contains('polling')) {
+    } else if (lower.contains('batch status:')) {
       appState.updateProgress(
         appState.progress.copyWith(
           stage: 'polling',
           message: 'Waiting for classification results...',
-          progress: 0.6,
+          progress: 0.8,
         ),
       );
-    } else if (line.contains('merging')) {
+    } else if (lower.contains('[batch] merge-results') ||
+        lower.contains('wrote:') &&
+            lower.contains('apps_with_classification_')) {
       appState.updateProgress(
         appState.progress.copyWith(
           stage: 'merging',
-          message: 'Merging results into final CSV...',
-          progress: 0.8,
+          message: 'Merging classification into final CSV...',
+          progress: 0.95,
         ),
       );
     }
@@ -195,6 +250,8 @@ class _HomePageState extends State<HomePage> {
   Future<void> _cancelProcessing() async {
     if (_currentProcess != null) {
       await ProcessService.cancelProcessing(_currentProcess!);
+      await _batchStatusSubscription?.cancel();
+      _batchStatusSubscription = null;
       if (!mounted) return;
       context.read<AppStateProvider>().resetProgress();
       _showErrorSnackBar('Processing cancelled');
@@ -219,7 +276,9 @@ class _HomePageState extends State<HomePage> {
       builder: (context, appState, _) {
         return Scaffold(
           appBar: AppBar(
-            title: const Text('AICCSA - AI tool for collecting and classifying sports applications'),
+            title: const Text(
+              'AICCSA - AI tool for collecting and classifying sports applications',
+            ),
             elevation: 2,
           ),
           body: IndexedStack(
@@ -237,11 +296,9 @@ class _HomePageState extends State<HomePage> {
           bottomNavigationBar: BottomNavigationBar(
             currentIndex: _currentTabIndex,
             onTap: (index) {
-              if (!appState.progress.isProcessing) {
-                setState(() {
-                  _currentTabIndex = index;
-                });
-              }
+              setState(() {
+                _currentTabIndex = index;
+              });
             },
             items: const [
               BottomNavigationBarItem(
@@ -279,6 +336,7 @@ class _HomePageState extends State<HomePage> {
     if (_currentProcess != null) {
       ProcessService.cancelProcessing(_currentProcess!);
     }
+    _batchStatusSubscription?.cancel();
     super.dispose();
   }
 }

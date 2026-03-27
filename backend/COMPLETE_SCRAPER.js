@@ -1,15 +1,109 @@
-import store from "app-store-scraper";
-import gplay from "google-play-scraper";
+/**
+ * Entrypoint orchestrator for the full scraping pipeline.
+ * Runs both store scrapers, merges/deduplicates results, exports files, and writes logs.
+ */
 import fs from "fs/promises";
-import { countriesEssential, TESTcountries } from "./countries_essential.js";
+import { spawn } from "child_process";
+import { countriesEssential } from "./lists/countries_essential.js";
+import { searchQueriesEssential } from "./lists/searchQueries_essential.js";
+import { AppStoreScraper } from "./scrapers/AppStoreScraper.js";
+import { GooglePlayScraper } from "./scrapers/GooglePlayScraper.js";
+import { combineAndDeduplicateApps } from "./modules/merger.js";
+import { printCombinedSummary } from "./modules/summary.js";
 import {
-  searchQueriesEssential,
-  TESTSearchQueries,
-} from "./searchQueries_essential.js";
+  exportCombinedToCSV,
+  exportCombinedToXLSX,
+} from "./modules/exporters.js";
 
-// Test configuration - minimal setup for quick testing
-const searchQueries = searchQueriesEssential;
-const countries = countriesEssential;
+function parseBoolean(value, fallback = false) {
+  if (value == null) return fallback;
+  if (value === "") return true;
+  return String(value).toLowerCase() === "true";
+}
+
+function normalizeStoreTarget(value) {
+  const normalized = String(value || "both").toLowerCase();
+  if (normalized === "google" || normalized === "google_play") {
+    return "google_play";
+  }
+  if (normalized === "apple" || normalized === "app_store") {
+    return "app_store";
+  }
+  if (normalized === "both") {
+    return "both";
+  }
+  return "both";
+}
+
+function parseCliArgs() {
+  const args = process.argv.slice(2);
+  const parsed = {};
+
+  for (const arg of args) {
+    if (!arg.startsWith("--")) continue;
+    const [key, ...rest] = arg.slice(2).split("=");
+    parsed[key] = rest.join("=");
+  }
+
+  return parsed;
+}
+
+async function resolveSearchQueries(keywordsArg, useEssentialQueries) {
+  if (useEssentialQueries) {
+    return searchQueriesEssential;
+  }
+
+  if (!keywordsArg || keywordsArg.trim().length === 0) {
+    return [];
+  }
+
+  const raw = keywordsArg.trim();
+
+  if (raw.toLowerCase().endsWith(".txt")) {
+    try {
+      const content = await fs.readFile(raw, "utf-8");
+      return content
+        .split(/\r?\n/)
+        .map((q) => q.trim())
+        .filter((q) => q.length > 0);
+    } catch {
+      // Fall back to comma-separated parsing if file cannot be read.
+    }
+  }
+
+  return raw
+    .split(",")
+    .map((q) => q.trim())
+    .filter((q) => q.length > 0);
+}
+
+function normalizeCountries(countriesArg) {
+  if (!countriesArg) {
+    return countriesEssential;
+  }
+
+  const parsed = countriesArg
+    .split(",")
+    .map((c) => c.trim().toLowerCase())
+    .filter((c) => c.length > 0);
+
+  return parsed.length > 0 ? parsed : countriesEssential;
+}
+
+const cliArgs = parseCliArgs();
+const targetStore = normalizeStoreTarget(cliArgs.store);
+const useEssentialQueries = parseBoolean(
+  cliArgs["use-essential-queries"],
+  false,
+);
+const searchTopCollections = parseBoolean(
+  cliArgs["search-top-collections"],
+  false,
+);
+const scrapeOnly = parseBoolean(cliArgs["scrape-only"], false);
+const selectedCountries = normalizeCountries(cliArgs.countries);
+const selectedModel = cliArgs.model || "gpt-5-mini";
+const apiKey = cliArgs["api-key"] || "";
 
 // Create a logging utility that writes to both console and file
 let logStream = "";
@@ -33,1259 +127,94 @@ async function saveLogFile() {
   }
 }
 
+function runOpenAIBatchClassifier({ inputFile, model, apiKey }) {
+  return new Promise((resolve, reject) => {
+    const args = [
+      "-m",
+      "backend.openAIBatchClassifier.src.main",
+      `--input-file=${inputFile}`,
+      `--model=${model}`,
+    ];
+
+    if (apiKey && apiKey.length > 0) {
+      args.push(`--api-key=${apiKey}`);
+    }
+
+    logToFile("\n🤖 Starting OpenAI batch classification pipeline...");
+    const child = spawn("python", args, {
+      cwd: process.cwd(),
+      env: {
+        ...process.env,
+        ...(apiKey && apiKey.length > 0 ? { OPENAI_API_KEY: apiKey } : {}),
+      },
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+
+    child.stdout.on("data", (data) => {
+      const lines = data.toString().split(/\r?\n/).filter(Boolean);
+      for (const line of lines) {
+        logToFile(`[openai-batch] ${line}`);
+      }
+    });
+
+    child.stderr.on("data", (data) => {
+      const lines = data.toString().split(/\r?\n/).filter(Boolean);
+      for (const line of lines) {
+        logToFile(`[openai-batch][stderr] ${line}`);
+      }
+    });
+
+    child.on("error", (error) => {
+      reject(
+        new Error(`Failed to start Python batch classifier: ${error.message}`),
+      );
+    });
+
+    child.on("close", (code) => {
+      if (code === 0) {
+        logToFile("✅ OpenAI batch classification completed successfully");
+        resolve();
+        return;
+      }
+      reject(new Error(`Python batch classifier exited with code ${code}`));
+    });
+  });
+}
+
 /**
  * Get comprehensive list of SPORTS and HEALTH_AND_FITNESS apps from Apple App Store
  */
 async function getAppStoreApps() {
-  try {
-    let allApps = [];
-    const targetCategories = [
-      store.category.SPORTS,
-      store.category.HEALTH_AND_FITNESS,
-    ];
-    const targetCountries = countries;
+  const searchQueries = await resolveSearchQueries(
+    cliArgs.keywords || "",
+    useEssentialQueries,
+  );
 
-    logToFile("🍎 Starting Apple App Store collection...");
-
-    // Calculate time estimation
-    const collections = [
-      store.collection.TOP_FREE_IOS,
-      store.collection.TOP_PAID_IOS,
-      store.collection.TOP_GROSSING_IOS,
-      store.collection.TOP_FREE_IPAD,
-      store.collection.TOP_PAID_IPAD,
-      store.collection.TOP_GROSSING_IPAD,
-    ];
-
-    const totalCollectionCalls =
-      targetCountries.length * targetCategories.length * collections.length;
-    const totalSearchCalls = targetCountries.length * searchQueries.length;
-    const totalAPICalls = totalCollectionCalls + totalSearchCalls;
-
-    logToFile(`   📋 APP STORE Collection calls: ${totalCollectionCalls}`);
-    logToFile(`   🔍 APP STORE Search calls: ${totalSearchCalls}`);
-    logToFile(`   🎯 APP STORE Total API calls: ${totalAPICalls}`);
-
-    // Process each country
-    for (const country of targetCountries) {
-      logToFile(`\n🌍 Processing APP STORE in: ${country.toUpperCase()}`);
-
-      for (const category of targetCategories) {
-        const categoryName = Object.keys(store.category).find(
-          (key) => store.category[key] === category
-        );
-        logToFile(`\n📱 APP STORE Processing ${categoryName} category...`);
-
-        // Step 1: Get apps from collections
-        for (const collection of collections) {
-          try {
-            const collectionName = Object.keys(store.collection).find(
-              (key) => store.collection[key] === collection
-            );
-            logToFile(`  📋 APP STORE Fetching from ${collectionName}...`);
-
-            const listApps = await store.list({
-              category: category,
-              collection: collection,
-              num: 200, // max 200
-              country: country,
-              fullDetail: true,
-            });
-
-            let newAppsCount = 0;
-            listApps.forEach((app) => {
-              if (
-                !allApps.find((existingApp) => existingApp.appId === app.appId)
-              ) {
-                allApps.push({
-                  ...app,
-                  platform: "Apple App Store",
-                  sourceMethod: "list",
-                  sourceCollection: collectionName,
-                  sourceCountry: country,
-                  targetCategory: categoryName,
-                  actualGenre: app.primaryGenre,
-                });
-                newAppsCount++;
-              }
-            });
-
-            logToFile(
-              `    ✅ APP STORE Added ${newAppsCount} new apps from ${collectionName}`
-            );
-            await new Promise((resolve) => setTimeout(resolve, 500));
-          } catch (error) {
-            logToFile(
-              `    ⚠️ APP STORE Failed to fetch from ${collection}: ${error.message}`
-            );
-          }
-        }
-      }
-
-      // Step 2: Search with queries for this country
-      logToFile(
-        `  🔍 APP STORE Searching with ${
-          searchQueries.length
-        } terms in ${country.toUpperCase()}...`
-      );
-
-      for (const query of searchQueries) {
-        try {
-          logToFile(
-            ` APP STORE Searching: "${query}" in ${country.toUpperCase()}`
-          );
-          const searchApps = await store.search({
-            term: query,
-            num: 200,
-            country: country,
-            fullDetail: true,
-          });
-
-          // Log total results found
-          logToFile(
-            `      📊 APP STORE Found ${searchApps.length} total results for "${query}"`
-          );
-
-          // Log genre distribution for debugging
-          const genreCount = {};
-          searchApps.forEach((app) => {
-            const genre = app.primaryGenre;
-            genreCount[genre] = (genreCount[genre] || 0) + 1;
-          });
-          logToFile(
-            `      🏷️  APP STORE Genres found: ${JSON.stringify(genreCount)}`
-          );
-
-          // Filter search results to only include SPORTS or HEALTH_AND_FITNESS category apps
-          const filteredSearchApps = searchApps.filter((app) => {
-            const appGenreID = app.primaryGenreID || "";
-            const appPrimaryGenre = app.primaryGenre || "";
-
-            // Only include apps that are explicitly in Sports or Health & Fitness categories
-            const isSportsGenre =
-              appGenreID === 6004 ||
-              appGenreID === "SPORTS" ||
-              appPrimaryGenre === "Sports";
-            const isHealthFitnessGenre =
-              appGenreID === 6013 ||
-              appGenreID === "HEALTH_AND_FITNESS" ||
-              appPrimaryGenre === "Health & Fitness";
-
-            const isValidCategory = isSportsGenre || isHealthFitnessGenre;
-
-            // Log filtered apps for debugging
-            if (!isValidCategory) {
-              logToFile(
-                `      🚫 APP STORE Filtered out: "${app.title}" (Genre: ${
-                  app.primaryGenre
-                }, IDs: ${JSON.stringify(appGenreID)})`
-              );
-            } else {
-              logToFile(
-                `      ✅ APP STORE Keeping: "${app.title}" (Genre: ${app.primaryGenre})`
-              );
-            }
-
-            return isValidCategory;
-          });
-
-          const filteredOutCount =
-            searchApps.length - filteredSearchApps.length;
-          if (filteredOutCount > 0) {
-            logToFile(
-              `      🔍 APP STORE Filtered out ${filteredOutCount} non-sports/fitness apps`
-            );
-          }
-
-          let newSearchAppsCount = 0;
-          filteredSearchApps.forEach((app) => {
-            if (
-              !allApps.find((existingApp) => existingApp.appId === app.appId)
-            ) {
-              allApps.push({
-                ...app,
-                platform: "Apple App Store",
-                sourceMethod: "search",
-                searchQuery: query,
-                sourceCountry: country,
-                targetCategory: "sports & fitness apps",
-                actualGenre: app.primaryGenre,
-              });
-              newSearchAppsCount++;
-            }
-          });
-
-          if (newSearchAppsCount > 0) {
-            logToFile(
-              `      ✅ APP STORE Added ${newSearchAppsCount} new apps from "${query}" in ${country.toUpperCase()}`
-            );
-          }
-
-          await new Promise((resolve) => setTimeout(resolve, 500));
-        } catch (searchError) {
-          logToFile(
-            `      ⚠️ APP STORE Search failed for "${query}" in ${country.toUpperCase()}: ${
-              searchError.message
-            }`
-          );
-        }
-      }
-
-      logToFile(
-        `🏁 APP STORE Completed ${country.toUpperCase()}: Total apps collected so far: ${
-          allApps.length
-        }`
-      );
-    }
-
-    logToFile(
-      `\n🎯 Apple App Store collection completed: ${allApps.length} apps`
-    );
-    return allApps;
-  } catch (error) {
-    logToFile(`Error in Apple App Store collection: ${error.message}`);
-    return [];
-  }
+  const scraper = new AppStoreScraper({
+    countries: selectedCountries,
+    searchQueries,
+    logToFile,
+    includeTopCollections: searchTopCollections,
+  });
+  return scraper.scrape();
 }
 
 /**
  * Get comprehensive list of SPORTS and HEALTH_AND_FITNESS apps from Google Play Store
  */
 async function getGooglePlayApps() {
-  try {
-    let allApps = [];
-    const targetCategories = ["SPORTS", "HEALTH_AND_FITNESS"];
-    const targetCountries = countries;
-
-    logToFile("🤖 Starting Google Play Store collection...");
-
-    const collections = [
-      gplay.collection.GROSSING,
-      gplay.collection.TOP_FREE,
-      gplay.collection.TOP_PAID,
-    ];
-    const totalCollectionCalls =
-      targetCountries.length * targetCategories.length * collections.length;
-    const totalSearchCalls = targetCountries.length * searchQueries.length;
-    const totalAPICalls = totalCollectionCalls + totalSearchCalls;
-
-    logToFile(`   📋 PLAY STORE Collection calls: ${totalCollectionCalls}`);
-    logToFile(`   🔍 PLAY STORE Search calls: ${totalSearchCalls}`);
-    logToFile(`   🎯 PLAY STORE Total Google Play API calls: ${totalAPICalls}`);
-
-    // Process each country
-    for (const country of targetCountries) {
-      logToFile(
-        `\n🌍 Processing Google Play Store in: ${country.toUpperCase()}`
-      );
-
-      for (const category of targetCategories) {
-        logToFile(`\n📱 PLAY STORE Processing ${category} category...`);
-
-        // Step 1: Get apps from collections
-        for (const collection of collections) {
-          try {
-            logToFile(`  📋 PLAY STORE Fetching from ${collection}...`);
-
-            const listApps = await gplay.list({
-              category: category,
-              collection: collection,
-              num: 500,
-              country: country,
-              fullDetail: true, // Need full details for genre information
-            });
-
-            let newAppsCount = 0;
-            listApps.forEach((app) => {
-              if (
-                !allApps.find((existingApp) => existingApp.appId === app.appId)
-              ) {
-                allApps.push({
-                  ...app,
-                  platform: "Google Play Store",
-                  sourceMethod: "list",
-                  sourceCollection: collection,
-                  sourceCountry: country,
-                  targetCategory: category,
-                  actualGenre: app.genreID,
-                });
-                newAppsCount++;
-              }
-            });
-
-            logToFile(
-              `    ✅ PLAY STORE Added ${newAppsCount} new apps from ${collection}`
-            );
-            await new Promise((resolve) => setTimeout(resolve, 500));
-          } catch (error) {
-            logToFile(
-              `    ⚠️ PLAY STORE Failed to fetch from ${collection}: ${error.message}`
-            );
-          }
-        }
-      }
-
-      // Step 2: Search with search queries for this country
-      logToFile(
-        `  🔍 PLAY STORE Searching with ${
-          searchQueries.length
-        } search terms in ${country.toUpperCase()}...`
-      );
-
-      for (const query of searchQueries) {
-        try {
-          logToFile(
-            `PLAYSTORE    Searching: "${query}" in ${country.toUpperCase()}`
-          );
-          const searchApps = await gplay.search({
-            term: query,
-            num: 250, // max is 250
-            country: country,
-            fullDetail: true, // Need full details for genre information
-          });
-
-          // Log total results found
-          logToFile(
-            `      📊 PLAY STORE Found ${searchApps.length} total results for "${query}"`
-          );
-
-          // Log genre distribution for debugging
-          const genreCount = {};
-          searchApps.forEach((app) => {
-            const genre = app.genreID;
-            genreCount[genre] = (genreCount[genre] || 0) + 1;
-          });
-          logToFile(`      🏷️  Genres found: ${JSON.stringify(genreCount)}`);
-
-          // Debug: log a few sample apps with all their properties
-          if (searchApps.length > 0) {
-            const sampleApp = searchApps[0];
-            logToFile(
-              `      🔍 PLAY STORE Sample app properties: ${JSON.stringify(
-                {
-                  title: sampleApp.title,
-                  genre: sampleApp.genre,
-                  genreId: sampleApp.genreId,
-                  categories: sampleApp.categories,
-                },
-                null,
-                2
-              )}`
-            );
-          }
-
-          // Filter search results to only include SPORTS or HEALTH_AND_FITNESS category apps
-          const filteredSearchApps = searchApps.filter((app) => {
-            const appGenreID = app.genreId;
-            const appGenre = app.genre;
-
-            // Only include apps that are explicitly in Sports or Health & Fitness categories
-            const isSportsGenre =
-              appGenreID === "SPORTS" || appGenre === "Sports";
-
-            const isHealthFitnessGenre =
-              appGenreID === "HEALTH_AND_FITNESS" ||
-              appGenre === "Health & Fitness";
-
-            const isValidCategory = isSportsGenre || isHealthFitnessGenre;
-
-            // Log filtered apps for debugging
-            if (!isValidCategory) {
-              logToFile(
-                `      🚫 PLAY STORE Filtered out (wrong genre): "${app.title}" (Genre: ${appGenre})`
-              );
-            } else {
-              logToFile(
-                `      ✅ PLAY STORE Keeping: "${app.title}" (Genre: ${appGenre})`
-              );
-            }
-
-            return isValidCategory;
-          });
-
-          const filteredOutCount =
-            searchApps.length - filteredSearchApps.length;
-          if (filteredOutCount > 0) {
-            logToFile(
-              `      🔍 PLAY STORE Filtered out ${filteredOutCount} non-sports/fitness apps`
-            );
-          }
-
-          let newSearchAppsCount = 0;
-          filteredSearchApps.forEach((app) => {
-            if (
-              !allApps.find((existingApp) => existingApp.appId === app.appId)
-            ) {
-              allApps.push({
-                ...app,
-                platform: "Google Play Store",
-                sourceMethod: "search",
-                searchQuery: query,
-                sourceCountry: country,
-                targetCategory: "SPORTS_AND_HEALTH_AND_FITNESS",
-                actualGenre: app.genreID,
-              });
-              newSearchAppsCount++;
-            }
-          });
-
-          if (newSearchAppsCount > 0) {
-            logToFile(
-              `      ✅ PLAY STORE Added ${newSearchAppsCount} new apps from "${query}" in ${country.toUpperCase()}`
-            );
-          }
-
-          await new Promise((resolve) => setTimeout(resolve, 500));
-        } catch (searchError) {
-          logToFile(
-            `      ⚠️ PLAY STORE Search failed for "${query}" in ${country.toUpperCase()}: ${
-              searchError.message
-            }`
-          );
-        }
-      }
-
-      logToFile(
-        `🏁 PLAY STORE Completed ${country.toUpperCase()}: Total apps collected so far: ${
-          allApps.length
-        }`
-      );
-    }
-
-    logToFile(`\n🎯 PLAY STORE collection completed: ${allApps.length} apps`);
-    return allApps;
-  } catch (error) {
-    logToFile(` PLAY STORE Error in collection: ${error.message}`);
-    return [];
-  }
-}
-
-// Play Store-specific JSON export with all available fields
-async function exportPlayStoreToJSON(apps, filename) {
-  try {
-    const exportData = {
-      exportInfo: {
-        platform: "Google Play Store",
-        exportDate: new Date().toISOString(),
-        totalApps: apps.length,
-      },
-      apps: apps.map((app) => ({
-        title: app.title,
-        description: app.description,
-        descriptionHTML: app.descriptionHTML,
-        summary: app.summary,
-        installs: app.installs,
-        minInstalls: app.minInstalls,
-        maxInstalls: app.maxInstalls,
-        score: app.score,
-        scoreText: app.scoreText,
-        ratings: app.ratings,
-        reviews: app.reviews,
-        histogram: app.histogram,
-        price: app.price,
-        free: app.free,
-        currency: app.currency,
-        priceText: app.priceText,
-        offersIAP: app.offersIAP,
-        IAPRange: app.IAPRange,
-        androidVersion: app.androidVersion,
-        androidVersionText: app.androidVersionText,
-        androidMaxVersion: app.androidMaxVersion,
-        developer: app.developer,
-        developerId: app.developerId,
-        developerEmail: app.developerEmail,
-        developerWebsite: app.developerWebsite,
-        developerAddress: app.developerAddress,
-        developerLegalName: app.developerLegalName,
-        developerLegalEmail: app.developerLegalEmail,
-        developerLegalAddress: app.developerLegalAddress,
-        developerLegalPhoneNumber: app.developerLegalPhoneNumber,
-        privacyPolicy: app.privacyPolicy,
-        developerInternalID: app.developerInternalID,
-        genre: app.genre,
-        genreId: app.genreId,
-        categories: app.categories,
-        icon: app.icon,
-        headerImage: app.headerImage,
-        screenshots: app.screenshots,
-        video: app.video,
-        videoImage: app.videoImage,
-        previewVideo: app.previewVideo,
-        contentRating: app.contentRating,
-        contentRatingDescription: app.contentRatingDescription,
-        adSupported: app.adSupported,
-        released: app.released,
-        updated: app.updated,
-        version: app.version,
-        recentChanges: app.recentChanges,
-        comments: app.comments,
-        preregister: app.preregister,
-        earlyAccessEnabled: app.earlyAccessEnabled,
-        isAvailableInPlayPass: app.isAvailableInPlayPass,
-        editorsChoice: app.editorsChoice,
-        features: app.features,
-        appId: app.appId,
-        url: app.url,
-        // Existing cross-platform and source fields
-        platform: app.platform,
-        platforms: app.platforms || [app.platform],
-        availableOnBothPlatforms: app.availableOnBothPlatforms || false,
-        crossPlatformMethod: app.crossPlatformMethod || null,
-        crossPlatformAppIds: app.crossPlatformAppIds || null,
-        sourceMethod: app.sourceMethod,
-        sourceCollection: app.sourceCollection || null,
-        sourceCountry: app.sourceCountry || null,
-        searchQuery: app.searchQuery || null,
-        subCategory: app.subCategory || app.searchQuery || null,
-        targetCategory: app.targetCategory,
-      })),
-    };
-    await fs.writeFile(filename, JSON.stringify(exportData, null, 2));
-    logToFile(`\n📁 Play Store JSON data exported to ${filename}`);
-  } catch (error) {
-    logToFile(`Failed to export Play Store JSON: ${error.message}`);
-  }
-}
-
-// Play Store-specific CSV export with all available fields
-async function exportPlayStoreToCSV(apps, filename) {
-  try {
-    const headers = [
-      "title",
-      "description",
-      "descriptionHTML",
-      "summary",
-      "installs",
-      "minInstalls",
-      "maxInstalls",
-      "score",
-      "scoreText",
-      "ratings",
-      "reviews",
-      "histogram_1",
-      "histogram_2",
-      "histogram_3",
-      "histogram_4",
-      "histogram_5",
-      "price",
-      "free",
-      "currency",
-      "priceText",
-      "offersIAP",
-      "IAPRange",
-      "androidVersion",
-      "androidVersionText",
-      "androidMaxVersion",
-      "developer",
-      "developerId",
-      "developerEmail",
-      "developerWebsite",
-      "developerAddress",
-      "developerLegalName",
-      "developerLegalEmail",
-      "developerLegalAddress",
-      "developerLegalPhoneNumber",
-      "privacyPolicy",
-      "developerInternalID",
-      "genre",
-      "genreId",
-      "categories",
-      "icon",
-      "headerImage",
-      "screenshots",
-      "video",
-      "videoImage",
-      "previewVideo",
-      "contentRating",
-      "contentRatingDescription",
-      "adSupported",
-      "released",
-      "updated",
-      "version",
-      "recentChanges",
-      "comments",
-      "preregister",
-      "earlyAccessEnabled",
-      "isAvailableInPlayPass",
-      "editorsChoice",
-      "features",
-      "appId",
-      "url",
-      // Existing cross-platform and source fields
-      "platform",
-      "platforms",
-      "availableOnBothPlatforms",
-      "crossPlatformMethod",
-      "crossPlatformAppIds",
-      "sourceMethod",
-      "sourceCollection",
-      "sourceCountry",
-      "searchQuery",
-      "subCategory",
-      "targetCategory",
-    ];
-    const csvRows = [headers.join(",")];
-    apps.forEach((app) => {
-      const row = [
-        (app.title || "").replace(/"/g, '""'),
-        (app.description || "").replace(/"/g, '""').substring(0, 200),
-        (app.descriptionHTML || "").replace(/"/g, '""'),
-        (app.summary || "").replace(/"/g, '""'),
-        app.installs || "",
-        app.minInstalls || "",
-        app.maxInstalls || "",
-        app.score || "",
-        app.scoreText || "",
-        app.ratings || "",
-        app.reviews || "",
-        app.histogram && app.histogram["1"] !== undefined
-          ? app.histogram["1"]
-          : "",
-        app.histogram && app.histogram["2"] !== undefined
-          ? app.histogram["2"]
-          : "",
-        app.histogram && app.histogram["3"] !== undefined
-          ? app.histogram["3"]
-          : "",
-        app.histogram && app.histogram["4"] !== undefined
-          ? app.histogram["4"]
-          : "",
-        app.histogram && app.histogram["5"] !== undefined
-          ? app.histogram["5"]
-          : "",
-        app.price || "",
-        app.free ? "TRUE" : "FALSE",
-        app.currency || "",
-        app.priceText || "",
-        app.offersIAP ? "TRUE" : "FALSE",
-        app.IAPRange || "",
-        app.androidVersion || "",
-        app.androidVersionText || "",
-        app.androidMaxVersion || "",
-        (app.developer || "").replace(/"/g, '""'),
-        app.developerId || "",
-        app.developerEmail || "",
-        app.developerWebsite || "",
-        app.developerAddress || "",
-        app.developerLegalName || "",
-        app.developerLegalEmail || "",
-        app.developerLegalAddress || "",
-        app.developerLegalPhoneNumber || "",
-        app.privacyPolicy || "",
-        app.developerInternalID || "",
-        app.genre || "",
-        app.genreId || "",
-        Array.isArray(app.categories)
-          ? app.categories.map((c) => `${c.name}:${c.id}`).join("; ")
-          : app.categories || "",
-        app.icon || "",
-        app.headerImage || "",
-        Array.isArray(app.screenshots)
-          ? app.screenshots.join("; ")
-          : app.screenshots || "",
-        app.video || "",
-        app.videoImage || "",
-        app.previewVideo || "",
-        app.contentRating || "",
-        app.contentRatingDescription || "",
-        app.adSupported ? "TRUE" : "FALSE",
-        app.released || "",
-        app.updated || "",
-        app.version || "",
-        app.recentChanges || "",
-        Array.isArray(app.comments)
-          ? app.comments.join("; ")
-          : app.comments || "",
-        app.preregister ? "TRUE" : "FALSE",
-        app.earlyAccessEnabled ? "TRUE" : "FALSE",
-        app.isAvailableInPlayPass ? "TRUE" : "FALSE",
-        app.editorsChoice ? "TRUE" : "FALSE",
-        Array.isArray(app.features)
-          ? app.features.map((f) => `${f.title}:${f.description}`).join("; ")
-          : app.features || "",
-        app.appId || "",
-        app.url || "",
-        // Existing cross-platform and source fields
-        app.platform || "",
-        Array.isArray(app.platforms)
-          ? app.platforms.join("; ")
-          : app.platforms || "",
-        app.availableOnBothPlatforms ? "TRUE" : "FALSE",
-        app.crossPlatformMethod || "",
-        Array.isArray(app.crossPlatformAppIds)
-          ? app.crossPlatformAppIds.join("; ")
-          : app.crossPlatformAppIds || "",
-        app.sourceMethod || "",
-        app.sourceCollection || "",
-        app.sourceCountry || "",
-        app.searchQuery || "",
-        app.subCategory || app.searchQuery || "",
-        app.targetCategory || "",
-      ]
-        .map((field) => `"${field}"`)
-        .join(",");
-      csvRows.push(row);
-    });
-    await fs.writeFile(filename, csvRows.join("\n"));
-    logToFile(`📊 Play Store CSV data exported to ${filename}`);
-  } catch (error) {
-    logToFile(`Failed to export Play Store CSV: ${error.message}`);
-  }
-}
-
-/**
- * Combine and deduplicate apps from both platforms with improved cross-platform tracking
- * Uses both appId matching and title similarity for better cross-platform detection
- */
-function combineAndDeduplicateApps(appStoreApps, googlePlayApps) {
-  logToFile("\n🔄 Combining and deduplicating apps from both platforms...");
-
-  const allApps = [...appStoreApps];
-  let duplicatesFoundByAppId = 0;
-  let duplicatesFoundByTitle = 0;
-  let newAppsAdded = 0;
-
-  // Add Google Play apps, checking for duplicates by appId first, then by title
-  googlePlayApps.forEach((playApp) => {
-    // First, check for exact appId match
-    let existingApp = allApps.find((app) => app.appId === playApp.appId);
-
-    if (existingApp) {
-      duplicatesFoundByAppId++;
-      // If duplicate found by appId, merge platform information
-      if (!existingApp.platforms) {
-        existingApp.platforms = [existingApp.platform];
-      }
-      if (!existingApp.platforms.includes(playApp.platform)) {
-        existingApp.platforms.push(playApp.platform);
-      }
-      existingApp.availableOnBothPlatforms = true;
-      existingApp.platform = "Both Platforms";
-      existingApp.crossPlatformMethod = "appId";
-
-      logToFile(
-        `   🔄 Cross-platform app found (appId): "${existingApp.title}" (${existingApp.appId})`
-      );
-    } else {
-      // Check for title similarity (exact match for now, could be enhanced with fuzzy matching)
-      existingApp = allApps.find(
-        (app) =>
-          app.title &&
-          playApp.title &&
-          app.title.trim().toLowerCase() === playApp.title.trim().toLowerCase()
-      );
-
-      if (existingApp) {
-        duplicatesFoundByTitle++;
-        // If duplicate found by title, merge platform information
-        if (!existingApp.platforms) {
-          existingApp.platforms = [existingApp.platform];
-        }
-        if (!existingApp.platforms.includes(playApp.platform)) {
-          existingApp.platforms.push(playApp.platform);
-        }
-        existingApp.availableOnBothPlatforms = true;
-        existingApp.platform = "Both Platforms";
-        existingApp.crossPlatformMethod = "title";
-
-        // Store both appIds for reference
-        if (!existingApp.crossPlatformAppIds) {
-          existingApp.crossPlatformAppIds = [existingApp.appId];
-        }
-        existingApp.crossPlatformAppIds.push(playApp.appId);
-
-        logToFile(
-          `   🔄 Cross-platform app found (title): "${existingApp.title}"`
-        );
-        logToFile(
-          `     📱 Apple: ${existingApp.appId} | 🤖 Google: ${playApp.appId}`
-        );
-      } else {
-        // New app from Google Play
-        playApp.platforms = [playApp.platform];
-        playApp.availableOnBothPlatforms = false;
-        allApps.push(playApp);
-        newAppsAdded++;
-      }
-    }
-  });
-
-  // Ensure all Apple-only apps have proper platform information
-  allApps.forEach((app) => {
-    if (app.platform === "Apple App Store" && !app.platforms) {
-      app.platforms = [app.platform];
-      app.availableOnBothPlatforms = false;
-    }
-  });
-
-  logToFile(`   📊 Enhanced deduplication summary:`);
-  logToFile(`   📱 Apple App Store apps: ${appStoreApps.length}`);
-  logToFile(`   🤖 Google Play Store apps: ${googlePlayApps.length}`);
-  logToFile(`   🔄 Cross-platform matches by appId: ${duplicatesFoundByAppId}`);
-  logToFile(`   🔄 Cross-platform matches by title: ${duplicatesFoundByTitle}`);
-  logToFile(
-    `   🔄 Total cross-platform apps: ${
-      duplicatesFoundByAppId + duplicatesFoundByTitle
-    }`
-  );
-  logToFile(`   ➕ New apps added from Google Play: ${newAppsAdded}`);
-  logToFile(`   🎯 Total unique apps: ${allApps.length}`);
-
-  return allApps;
-}
-
-/**
- * Print summary statistics of the collected apps
- */
-function printCombinedSummary(apps) {
-  logToFile("\n📊 COMBINED COLLECTION SUMMARY");
-  logToFile("=".repeat(50));
-
-  // Platform breakdown with detailed cross-platform analysis
-  const platformCount = {};
-  const categoryCount = {};
-  const sourceMethodCount = {};
-  const countryCount = {};
-  const freeVsPaid = { free: 0, paid: 0 };
-  const crossPlatformMethods = { appId: 0, title: 0 };
-  let crossPlatformApps = 0;
-  let appleOnlyApps = 0;
-  let googleOnlyApps = 0;
-
-  apps.forEach((app) => {
-    // Count by platform (now shows "Both Platforms" for cross-platform apps)
-    const platform = app.platform || "Unknown";
-    platformCount[platform] = (platformCount[platform] || 0) + 1;
-
-    // Count cross-platform apps and platform-specific apps
-    if (app.availableOnBothPlatforms) {
-      crossPlatformApps++;
-      // Count by detection method
-      if (app.crossPlatformMethod === "appId") {
-        crossPlatformMethods.appId++;
-      } else if (app.crossPlatformMethod === "title") {
-        crossPlatformMethods.title++;
-      }
-    } else if (app.platform === "Apple App Store") {
-      appleOnlyApps++;
-    } else if (app.platform === "Google Play Store") {
-      googleOnlyApps++;
-    }
-
-    // Count by category
-    const category = app.targetCategory || app.genre || "Unknown";
-    categoryCount[category] = (categoryCount[category] || 0) + 1;
-
-    // Count by source method
-    const source = app.sourceMethod || "unknown";
-    sourceMethodCount[source] = (sourceMethodCount[source] || 0) + 1;
-
-    // Count by country
-    const country = app.sourceCountry || "unknown";
-    countryCount[country] = (countryCount[country] || 0) + 1;
-
-    // Count free vs paid
-    if (app.free) {
-      freeVsPaid.free++;
-    } else {
-      freeVsPaid.paid++;
-    }
-  });
-
-  logToFile(`Total Apps: ${apps.length}`);
-
-  logToFile("\nPlatform Distribution:");
-  Object.entries(platformCount).forEach(([platform, count]) => {
-    logToFile(`  ${platform}: ${count} apps`);
-  });
-
-  logToFile("\nDetailed Platform Analysis:");
-  logToFile(`  📱 Apple App Store only: ${appleOnlyApps} apps`);
-  logToFile(`  🤖 Google Play Store only: ${googleOnlyApps} apps`);
-  logToFile(`  🔄 Available on both platforms: ${crossPlatformApps} apps`);
-
-  // Calculate cross-platform percentage
-  const crossPlatformPercentage = (
-    (crossPlatformApps / apps.length) *
-    100
-  ).toFixed(1);
-  logToFile(
-    `  📊 Cross-platform coverage: ${crossPlatformPercentage}% of apps`
+  const searchQueries = await resolveSearchQueries(
+    cliArgs.keywords || "",
+    useEssentialQueries,
   );
 
-  logToFile("\nCross-Platform Detection Methods:");
-  logToFile(`  🆔 Matched by AppId: ${crossPlatformMethods.appId} apps`);
-  logToFile(`  📝 Matched by Title: ${crossPlatformMethods.title} apps`);
-  logToFile(
-    `  🎯 Total detected: ${
-      crossPlatformMethods.appId + crossPlatformMethods.title
-    } apps`
-  );
-
-  logToFile("\nBy Category:");
-  Object.entries(categoryCount).forEach(([cat, count]) => {
-    logToFile(`  ${cat}: ${count} apps`);
+  const scraper = new GooglePlayScraper({
+    countries: selectedCountries,
+    searchQueries,
+    logToFile,
+    includeTopCollections: searchTopCollections,
   });
-
-  logToFile("\nBy Source Method:");
-  Object.entries(sourceMethodCount).forEach(([method, count]) => {
-    logToFile(`  ${method}: ${count} apps`);
-  });
-
-  logToFile("\nBy Country:");
-  const topCountries = Object.entries(countryCount)
-    .sort(([, a], [, b]) => b - a)
-    .slice(0, 30);
-  topCountries.forEach(([country, count]) => {
-    logToFile(`  ${country.toUpperCase()}: ${count} apps`);
-  });
-
-  logToFile(`\nFree vs Paid:`);
-  logToFile(`  Free: ${freeVsPaid.free} apps`);
-  logToFile(`  Paid: ${freeVsPaid.paid} apps`);
-}
-
-/**
- * Export combined apps data to JSON file
- */
-async function exportCombinedToJSON(apps, filename) {
-  try {
-    // Superset schema: all App Store and Play Store fields
-    const exportData = {
-      exportInfo: {
-        platforms: ["Apple App Store", "Google Play Store"],
-        exportDate: new Date().toISOString(),
-        totalApps: apps.length,
-        searchScope: "Global - Multiple Countries and Platforms",
-        categoriesSearched: ["SPORTS", "HEALTH_AND_FITNESS"],
-        deduplicationMethod: "appId and title matching across platforms",
-      },
-      apps: apps.map((app) => ({
-        // App Store fields
-        id: app.id || "",
-        appId: app.appId || "",
-        title: app.title || "",
-        url: app.url || "",
-        description: app.description || "",
-        icon: app.icon || "",
-        genres: app.genres || "",
-        genreIds: app.genreIds || "",
-        primaryGenre: app.primaryGenre || "",
-        primaryGenreId: app.primaryGenreId || "",
-        contentRating: app.contentRating || "",
-        languages: app.languages || "",
-        size: app.size || "",
-        requiredOsVersion: app.requiredOsVersion || "",
-        released: app.released || "",
-        updated: app.updated || "",
-        releaseNotes: app.releaseNotes || "",
-        version: app.version || "",
-        price: app.price || "",
-        currency: app.currency || "",
-        free: app.free != null ? app.free : "",
-        developerId: app.developerId || "",
-        developer: app.developer || "",
-        developerUrl: app.developerUrl || "",
-        developerWebsite: app.developerWebsite || "",
-        score: app.score || "",
-        reviews: app.reviews || "",
-        currentVersionScore: app.currentVersionScore || "",
-        currentVersionReviews: app.currentVersionReviews || "",
-        screenshots: app.screenshots || "",
-        ipadScreenshots: app.ipadScreenshots || "",
-        appletvScreenshots: app.appletvScreenshots || "",
-        supportedDevices: app.supportedDevices || "",
-        // Play Store fields
-        descriptionHTML: app.descriptionHTML || "",
-        summary: app.summary || "",
-        installs: app.installs || "",
-        minInstalls: app.minInstalls || "",
-        maxInstalls: app.maxInstalls || "",
-        ratings: app.ratings || "",
-        histogram: app.histogram || "",
-        priceText: app.priceText || "",
-        offersIAP: app.offersIAP != null ? app.offersIAP : "",
-        IAPRange: app.IAPRange || "",
-        androidVersion: app.androidVersion || "",
-        androidVersionText: app.androidVersionText || "",
-        androidMaxVersion: app.androidMaxVersion || "",
-        developerEmail: app.developerEmail || "",
-        developerAddress: app.developerAddress || "",
-        developerLegalName: app.developerLegalName || "",
-        developerLegalEmail: app.developerLegalEmail || "",
-        developerLegalAddress: app.developerLegalAddress || "",
-        developerLegalPhoneNumber: app.developerLegalPhoneNumber || "",
-        privacyPolicy: app.privacyPolicy || "",
-        developerInternalID: app.developerInternalID || "",
-        genre: app.genre || "",
-        genreId: app.genreId || "",
-        categories: app.categories || "",
-        headerImage: app.headerImage || "",
-        video: app.video || "",
-        videoImage: app.videoImage || "",
-        previewVideo: app.previewVideo || "",
-        contentRatingDescription: app.contentRatingDescription || "",
-        adSupported: app.adSupported != null ? app.adSupported : "",
-        recentChanges: app.recentChanges || "",
-        comments: app.comments || "",
-        preregister: app.preregister != null ? app.preregister : "",
-        earlyAccessEnabled:
-          app.earlyAccessEnabled != null ? app.earlyAccessEnabled : "",
-        isAvailableInPlayPass:
-          app.isAvailableInPlayPass != null ? app.isAvailableInPlayPass : "",
-        editorsChoice: app.editorsChoice != null ? app.editorsChoice : "",
-        features: app.features || "",
-        // Existing cross-platform and source fields
-        platform: app.platform || "",
-        platforms: app.platforms || [app.platform],
-        availableOnBothPlatforms: app.availableOnBothPlatforms || false,
-        crossPlatformMethod: app.crossPlatformMethod || null,
-        crossPlatformAppIds: app.crossPlatformAppIds || null,
-        sourceMethod: app.sourceMethod || "",
-        sourceCollection: app.sourceCollection || "",
-        sourceCountry: app.sourceCountry || "",
-        searchQuery: app.searchQuery || "",
-        subCategory: app.subCategory || app.searchQuery || "",
-        targetCategory: app.targetCategory || "",
-      })),
-    };
-    await fs.writeFile(filename, JSON.stringify(exportData, null, 2));
-    logToFile(`\n📁 Combined JSON data exported to ${filename}`);
-  } catch (error) {
-    logToFile(`Failed to export combined JSON: ${error.message}`);
-  }
-}
-
-/**
- * Export combined apps data to CSV file
- */
-async function exportCombinedToCSV(apps, filename) {
-  try {
-    // Superset schema: all App Store and Play Store fields
-    const headers = [
-      // App Store fields
-      "id",
-      "appId",
-      "title",
-      "url",
-      "description",
-      "icon",
-      "genres",
-      "genreIds",
-      "primaryGenre",
-      "primaryGenreId",
-      "contentRating",
-      "languages",
-      "size",
-      "requiredOsVersion",
-      "released",
-      "updated",
-      "releaseNotes",
-      "version",
-      "price",
-      "currency",
-      "free",
-      "developerId",
-      "developer",
-      "developerUrl",
-      "developerWebsite",
-      "score",
-      "reviews",
-      "currentVersionScore",
-      "currentVersionReviews",
-      "screenshots",
-      "ipadScreenshots",
-      "appletvScreenshots",
-      "supportedDevices",
-      // Play Store fields
-      "descriptionHTML",
-      "summary",
-      "installs",
-      "minInstalls",
-      "maxInstalls",
-      "ratings",
-      "histogram_1",
-      "histogram_2",
-      "histogram_3",
-      "histogram_4",
-      "histogram_5",
-      "priceText",
-      "offersIAP",
-      "IAPRange",
-      "androidVersion",
-      "androidVersionText",
-      "androidMaxVersion",
-      "developerEmail",
-      "developerAddress",
-      "developerLegalName",
-      "developerLegalEmail",
-      "developerLegalAddress",
-      "developerLegalPhoneNumber",
-      "privacyPolicy",
-      "developerInternalID",
-      "genre",
-      "genreId",
-      "categories",
-      "headerImage",
-      "video",
-      "videoImage",
-      "previewVideo",
-      "contentRatingDescription",
-      "adSupported",
-      "recentChanges",
-      "comments",
-      "preregister",
-      "earlyAccessEnabled",
-      "isAvailableInPlayPass",
-      "editorsChoice",
-      "features",
-      // Existing cross-platform and source fields
-      "platform",
-      "platforms",
-      "availableOnBothPlatforms",
-      "crossPlatformMethod",
-      "crossPlatformAppIds",
-      "sourceMethod",
-      "sourceCollection",
-      "sourceCountry",
-      "searchQuery",
-      "subCategory",
-      "targetCategory",
-    ];
-    const csvRows = [headers.join(",")];
-    apps.forEach((app) => {
-      const row = [
-        // App Store fields
-        app.id || "",
-        app.appId || "",
-        (app.title || "").replace(/"/g, '""'),
-        app.url || "",
-        (app.description || "").replace(/"/g, '""').substring(0, 200),
-        app.icon || "",
-        Array.isArray(app.genres) ? app.genres.join("; ") : app.genres || "",
-        Array.isArray(app.genreIds)
-          ? app.genreIds.join("; ")
-          : app.genreIds || "",
-        app.primaryGenre || "",
-        app.primaryGenreId || "",
-        app.contentRating || "",
-        Array.isArray(app.languages)
-          ? app.languages.join("; ")
-          : app.languages || "",
-        app.size || "",
-        app.requiredOsVersion || "",
-        app.released || "",
-        app.updated || "",
-        app.releaseNotes || "",
-        app.version || "",
-        app.price || "",
-        app.currency || "",
-        app.free ? "TRUE" : "FALSE",
-        app.developerId || "",
-        (app.developer || "").replace(/"/g, '""'),
-        app.developerUrl || "",
-        app.developerWebsite || "",
-        app.score || "",
-        app.reviews || "",
-        app.currentVersionScore || "",
-        app.currentVersionReviews || "",
-        Array.isArray(app.screenshots)
-          ? app.screenshots.join("; ")
-          : app.screenshots || "",
-        Array.isArray(app.ipadScreenshots)
-          ? app.ipadScreenshots.join("; ")
-          : app.ipadScreenshots || "",
-        Array.isArray(app.appletvScreenshots)
-          ? app.appletvScreenshots.join("; ")
-          : app.appletvScreenshots || "",
-        Array.isArray(app.supportedDevices)
-          ? app.supportedDevices.join("; ")
-          : app.supportedDevices || "",
-        // Play Store fields
-        (app.descriptionHTML || "").replace(/"/g, '""'),
-        (app.summary || "").replace(/"/g, '""'),
-        app.installs || "",
-        app.minInstalls || "",
-        app.maxInstalls || "",
-        app.ratings || "",
-        app.histogram && app.histogram["1"] !== undefined
-          ? app.histogram["1"]
-          : "",
-        app.histogram && app.histogram["2"] !== undefined
-          ? app.histogram["2"]
-          : "",
-        app.histogram && app.histogram["3"] !== undefined
-          ? app.histogram["3"]
-          : "",
-        app.histogram && app.histogram["4"] !== undefined
-          ? app.histogram["4"]
-          : "",
-        app.histogram && app.histogram["5"] !== undefined
-          ? app.histogram["5"]
-          : "",
-        app.priceText || "",
-        app.offersIAP ? "TRUE" : "FALSE",
-        app.IAPRange || "",
-        app.androidVersion || "",
-        app.androidVersionText || "",
-        app.androidMaxVersion || "",
-        app.developerEmail || "",
-        app.developerAddress || "",
-        app.developerLegalName || "",
-        app.developerLegalEmail || "",
-        app.developerLegalAddress || "",
-        app.developerLegalPhoneNumber || "",
-        app.privacyPolicy || "",
-        app.developerInternalID || "",
-        app.genre || "",
-        app.genreId || "",
-        Array.isArray(app.categories)
-          ? app.categories.map((c) => `${c.name}:${c.id}`).join("; ")
-          : app.categories || "",
-        app.headerImage || "",
-        app.video || "",
-        app.videoImage || "",
-        app.previewVideo || "",
-        app.contentRatingDescription || "",
-        app.adSupported ? "TRUE" : "FALSE",
-        app.recentChanges || "",
-        Array.isArray(app.comments)
-          ? app.comments.join("; ")
-          : app.comments || "",
-        app.preregister ? "TRUE" : "FALSE",
-        app.earlyAccessEnabled ? "TRUE" : "FALSE",
-        app.isAvailableInPlayPass ? "TRUE" : "FALSE",
-        app.editorsChoice ? "TRUE" : "FALSE",
-        Array.isArray(app.features)
-          ? app.features.map((f) => `${f.title}:${f.description}`).join("; ")
-          : app.features || "",
-        // Existing cross-platform and source fields
-        app.platform || "",
-        Array.isArray(app.platforms)
-          ? app.platforms.join("; ")
-          : app.platforms || "",
-        app.availableOnBothPlatforms ? "TRUE" : "FALSE",
-        app.crossPlatformMethod || "",
-        Array.isArray(app.crossPlatformAppIds)
-          ? app.crossPlatformAppIds.join("; ")
-          : app.crossPlatformAppIds || "",
-        app.sourceMethod || "",
-        app.sourceCollection || "",
-        app.sourceCountry || "",
-        app.searchQuery || "",
-        app.subCategory || app.searchQuery || "",
-        app.targetCategory || "",
-      ]
-        .map((field) => `"${field}"`)
-        .join(",");
-      csvRows.push(row);
-    });
-
-    await fs.writeFile(filename, csvRows.join("\n"));
-    logToFile(`📊 Enhanced CSV data exported to ${filename}`);
-  } catch (error) {
-    logToFile(`Failed to export combined CSV: ${error.message}`);
-  }
+  return scraper.scrape();
 }
 
 /**
@@ -1297,19 +226,35 @@ async function main() {
 
   logToFile("🚀 Starting scraper for Apple App Store & Google Play Store...");
   logToFile(`⏰ Started at: ${startTimeFormatted}`);
+  logToFile(`⚙️ Store target: ${targetStore}`);
+  logToFile(`⚙️ Countries: ${selectedCountries.join(",")}`);
+  logToFile(`⚙️ Use essential queries: ${useEssentialQueries}`);
+  logToFile(`⚙️ Search top collections: ${searchTopCollections}`);
+  logToFile(`⚙️ Scrape-only mode: ${scrapeOnly}`);
+  logToFile(`⚙️ Model: ${selectedModel}`);
+  logToFile(`⚙️ API key provided: ${apiKey.length > 0}`);
 
   try {
     // Scrape both platforms in parallel for better performance
     logToFile("\n📱 Starting parallel scraping of both platforms...");
 
-    const [appStoreApps, googlePlayApps] = await Promise.all([
-      getAppStoreApps(),
-      getGooglePlayApps(),
-    ]);
+    let appStoreApps = [];
+    let googlePlayApps = [];
+
+    if (targetStore === "both") {
+      [appStoreApps, googlePlayApps] = await Promise.all([
+        getAppStoreApps(),
+        getGooglePlayApps(),
+      ]);
+    } else if (targetStore === "app_store") {
+      appStoreApps = await getAppStoreApps();
+    } else if (targetStore === "google_play") {
+      googlePlayApps = await getGooglePlayApps();
+    }
 
     if (appStoreApps.length === 0 && googlePlayApps.length === 0) {
       logToFile(
-        "❌ No apps were collected from either platform. Check your internet connection and try again."
+        "❌ No apps were collected from either platform. Check your internet connection and try again.",
       );
       await saveLogFile();
       return;
@@ -1318,48 +263,41 @@ async function main() {
     // Combine and deduplicate
     const combinedApps = combineAndDeduplicateApps(
       appStoreApps,
-      googlePlayApps
+      googlePlayApps,
+      logToFile,
     );
 
     if (combinedApps.length > 0) {
-      printCombinedSummary(combinedApps);
+      printCombinedSummary(combinedApps, logToFile);
+      const outputDir = "backend/output";
+      await fs.mkdir(outputDir, { recursive: true });
 
-      // Create timestamped filenames
-      const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-      const jsonFilename = `COMPLETE_sports_fitness_apps_${timestamp}.json`;
-      const csvFilename = `COMPLETE_sports_fitness_apps_${timestamp}.csv`;
-      // Apple only
-      const appleJsonFilename = `COMPLETE_appstore_sports_fitness_apps_${timestamp}.json`;
-      const appleCsvFilename = `COMPLETE_appstore_sports_fitness_apps_${timestamp}.csv`;
-      // Google Play only
-      const playJsonFilename = `COMPLETE_playstore_sports_fitness_apps_${timestamp}.json`;
-      const playCsvFilename = `COMPLETE_playstore_sports_fitness_apps_${timestamp}.csv`;
+      const now = new Date();
+      const timestamp = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}_${String(now.getHours()).padStart(2, "0")}${String(now.getMinutes()).padStart(2, "0")}`;
+      const csvFilename = `${outputDir}/scrape_output_CSV_${timestamp}.csv`;
+      const xlsxFilename = `${outputDir}/scrape_output_XLSX_${timestamp}.xlsx`;
 
-      // Export Apple App Store results
-      if (appStoreApps.length > 0) {
-        await exportCombinedToJSON(appStoreApps, appleJsonFilename);
-        await exportCombinedToCSV(appStoreApps, appleCsvFilename);
-        logToFile(`  - ${appleJsonFilename} (Apple App Store JSON)`);
-        logToFile(`  - ${appleCsvFilename} (Apple App Store CSV)`);
+      await exportCombinedToCSV(combinedApps, csvFilename, logToFile);
+      await exportCombinedToXLSX(combinedApps, xlsxFilename, logToFile);
+
+      if (!scrapeOnly) {
+        await runOpenAIBatchClassifier({
+          inputFile: csvFilename,
+          model: selectedModel,
+          apiKey,
+        });
+      } else {
+        logToFile(
+          "⏭️ Scrape-only mode enabled: skipping OpenAI batch classification.",
+        );
       }
-      // Export Google Play Store results (all fields)
-      if (googlePlayApps.length > 0) {
-        await exportPlayStoreToJSON(googlePlayApps, playJsonFilename);
-        await exportPlayStoreToCSV(googlePlayApps, playCsvFilename);
-        logToFile(`  - ${playJsonFilename} (Google Play Store JSON)`);
-        logToFile(`  - ${playCsvFilename} (Google Play Store CSV)`);
-      }
-
-      // Export combined files
-      await exportCombinedToJSON(combinedApps, jsonFilename);
-      await exportCombinedToCSV(combinedApps, csvFilename);
 
       logToFile("\n✅ scraping completed successfully!");
       logToFile("📄 Files created:");
-      logToFile(`  - ${jsonFilename} (Combined JSON)`);
       logToFile(`  - ${csvFilename} (Combined CSV)`);
+      logToFile(`  - ${xlsxFilename} (Combined XLSX)`);
       logToFile(
-        `\n🎯 Summary: Collected ${combinedApps.length} unique sports & fitness apps from both platforms`
+        `\n🎯 Summary: Collected ${combinedApps.length} unique sports & fitness apps from both platforms`,
       );
 
       // Calculate and display actual time taken
@@ -1375,7 +313,7 @@ async function main() {
       logToFile(`\n⏱️  ACTUAL TIME TAKEN:`);
       logToFile(`   🏁 Finished at: ${endTimeFormatted}`);
       logToFile(
-        `   ⌛ Total duration: ${actualDurationHours}h ${remainingMinutes}m ${remainingSeconds}s`
+        `   ⌛ Total duration: ${actualDurationHours}h ${remainingMinutes}m ${remainingSeconds}s`,
       );
       logToFile(`   📊 Performance: ${actualDurationMs}ms total`);
 

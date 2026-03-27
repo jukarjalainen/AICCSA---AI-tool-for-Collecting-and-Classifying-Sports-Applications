@@ -1,4 +1,9 @@
 /**
+ * Search query configuration list module.
+ * Provides essential sports and fitness search terms used by both scraper classes.
+ */
+
+/**
  * Essential search terms for sports and fitness apps - Top performing terms only
  * Reduced list for faster scraping while maintaining good coverage
  */

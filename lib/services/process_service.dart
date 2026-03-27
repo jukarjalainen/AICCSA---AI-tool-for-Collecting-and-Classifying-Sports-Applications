@@ -3,38 +3,38 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 
 class ProcessService {
-  static const String pythonOrchestrator = 'backend/orchestrator.py';
+  static const String scraperEntrypoint = 'backend/COMPLETE_SCRAPER.js';
 
   // Start the scraping and processing pipeline
   static Future<Process> startProcessing({
     required String targetStore,
     required String keywords,
+    required bool useEssentialQueries,
     required List<String> countries,
     required String llmModel,
     required bool searchTopCollections,
+    required bool scrapeOnly,
     String? apiKey,
   }) async {
     try {
       final args = [
-        pythonOrchestrator,
+        scraperEntrypoint,
         '--store=$targetStore',
         '--keywords=$keywords',
+        '--use-essential-queries=$useEssentialQueries',
         '--countries=${countries.join(",")}',
         '--model=$llmModel',
         '--search-top-collections=$searchTopCollections',
-        if (searchTopCollections) '--all-collections=true',
-        if (searchTopCollections) '--top-collection-stores=$targetStore',
-        if (searchTopCollections)
-          '--top-collection-categories=SPORTS,HEALTH_AND_FITNESS',
+        '--scrape-only=$scrapeOnly',
+        '--top-collection-stores=$targetStore',
+        '--top-collection-categories=SPORTS,HEALTH_AND_FITNESS',
         if (apiKey != null) '--api-key=$apiKey',
       ];
 
-      debugPrint(
-        '[ProcessService] Starting Python orchestrator with args: $args',
-      );
+      debugPrint('[ProcessService] Starting Node scraper with args: $args');
 
       final process = await Process.start(
-        'python',
+        'node',
         args,
         mode: ProcessStartMode.normal,
       );
