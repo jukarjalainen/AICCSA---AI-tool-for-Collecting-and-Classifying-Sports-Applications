@@ -6,9 +6,10 @@ import fs from "fs/promises";
 import XLSX from "xlsx";
 
 const OUTPUT_COLUMNS = [
-  "id",
+  "appleId",
   "appId",
   "title",
+  "url",
   "platform",
   "sourceCountry",
   "sourceMethod",
@@ -45,8 +46,10 @@ const OUTPUT_COLUMNS = [
 ];
 
 const XLSX_SCHEMA_COLUMNS = [
+  "appleId",
   "App_ID",
   "App_Name",
+  "url",
   "Is_relevant",
   "Purpose",
   "Stakeholder",
@@ -91,9 +94,10 @@ const XLSX_SCHEMA_COLUMNS = [
 function buildOutputRow(app) {
   const resolvedId = app.id || app.appId || "";
   return {
-    id: resolvedId,
+    appleId: app.id || "",
     appId: app.appId || resolvedId,
     title: app.title || "",
+    url: app.url || "",
     platform: app.platform || "",
     sourceCountry: app.sourceCountry || "",
     sourceMethod: app.sourceMethod || "",
@@ -152,8 +156,10 @@ function buildSchemaXlsxRow(app) {
       : "";
 
   return {
-    App_ID: app.id || app.appId || "",
+    appleId: app.id || "",
+    App_ID: app.appId || "",
     App_Name: app.title || "",
+    url: app.url || "",
     Is_relevant: app.is_relevant ?? "",
     Purpose: app.purpose ?? "",
     Stakeholder: app.stakeholder ?? "",
@@ -213,6 +219,7 @@ export async function exportPlayStoreToJSON(apps, filename, logToFile) {
       },
       apps: apps.map((app) => ({
         title: app.title,
+        url: app.url,
         installs: app.installs,
         minInstalls: app.minInstalls,
         maxInstalls: app.maxInstalls,
@@ -270,6 +277,7 @@ export async function exportPlayStoreToCSV(apps, filename, logToFile) {
   try {
     const headers = [
       "title",
+      "url",
       "installs",
       "minInstalls",
       "maxInstalls",
@@ -322,6 +330,7 @@ export async function exportPlayStoreToCSV(apps, filename, logToFile) {
     apps.forEach((app) => {
       const row = [
         (app.title || "").replace(/"/g, '""'),
+        app.url || "",
         app.installs || "",
         app.minInstalls || "",
         app.maxInstalls || "",
@@ -417,6 +426,7 @@ export async function exportCombinedToJSON(apps, filename, logToFile) {
         id: app.id || "",
         appId: app.appId || "",
         title: app.title || "",
+        url: app.url || "",
         genres: app.genres || "",
         genreIds: app.genreIds || "",
         primaryGenre: app.primaryGenre || "",
