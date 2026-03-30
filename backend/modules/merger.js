@@ -12,9 +12,6 @@ export function combineApps(appStoreApps, googlePlayApps, logToFile) {
       return {
         ...app,
         platform,
-        platforms: app?.platforms || [platform],
-        availableOnBothPlatforms: app?.availableOnBothPlatforms || false,
-        crossPlatformMethod: app?.crossPlatformMethod || null,
       };
     });
 
@@ -31,7 +28,6 @@ export function combineApps(appStoreApps, googlePlayApps, logToFile) {
   logToFile(`   📱 Apple kept: ${appleApps.length}`);
   logToFile(`   🤖 Google Play Store input: ${googlePlayApps.length}`);
   logToFile(`   🤖 Google kept: ${googleApps.length}`);
-  logToFile("   🔁 Cross-platform entries are preserved as separate rows.");
   logToFile(`   🎯 Total combined apps: ${combinedApps.length}`);
 
   return combinedApps;

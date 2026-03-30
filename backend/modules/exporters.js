@@ -55,34 +55,22 @@ const XLSX_SCHEMA_COLUMNS = [
   "Stakeholder",
   "Sport_Type",
   "searchQuery",
-  "Platform_Technology",
-  "store",
-  "score_playStore",
-  "score_appStore",
-  "score_average",
-  "reviews_playStore",
-  "reviews_appStore",
-  "reviews_total",
-  "genres_appStore",
+  "Platform",
+  "score",
+  "reviews",
+  "genres_appstore",
   "genreIds_appStore",
   "primaryGenre_appStore",
   "primaryGenreId",
   "genre_playStore",
   "genreId_playStore",
-  "categories",
   "contentRating",
   "released",
   "updated",
-  "price_playStore",
-  "price_appStore",
+  "price",
   "currency",
   "free",
   "ratings",
-  "platform",
-  "platforms",
-  "availableOnBothPlatforms",
-  "crossPlatformMethod",
-  "crossPlatformAppIds",
   "developer",
   "developerId",
   "sourceMethod",
@@ -138,22 +126,6 @@ function buildOutputRow(app) {
 
 function buildSchemaXlsxRow(app) {
   const platform = app.platform || "";
-  const isPlayStore = /google play/i.test(platform);
-  const isAppStore = /apple app store/i.test(platform);
-  const playScore = isPlayStore ? (app.score ?? "") : "";
-  const appScore = isAppStore ? (app.score ?? "") : "";
-  const scoreAverage =
-    playScore !== "" && appScore !== ""
-      ? (Number(playScore) + Number(appScore)) / 2
-      : playScore !== ""
-        ? playScore
-        : appScore;
-  const playReviews = isPlayStore ? (app.ratings ?? app.reviews ?? "") : "";
-  const appReviews = isAppStore ? (app.reviews ?? "") : "";
-  const reviewsTotal =
-    playReviews !== "" || appReviews !== ""
-      ? Number(playReviews || 0) + Number(appReviews || 0)
-      : "";
 
   return {
     appleId: app.id || "",
@@ -165,40 +137,22 @@ function buildSchemaXlsxRow(app) {
     Stakeholder: app.stakeholder ?? "",
     Sport_Type: app.sport_type ?? "",
     searchQuery: app.searchQuery || "",
-    Platform_Technology: platform,
-    store: platform,
-    score_playStore: playScore,
-    score_appStore: appScore,
-    score_average: scoreAverage,
-    reviews_playStore: playReviews,
-    reviews_appStore: appReviews,
-    reviews_total: reviewsTotal,
-    genres_appStore: app.genres || "",
+    Platform: platform,
+    score: app.score || "",
+    reviews: app.reviews || "",
+    genres_appstore: app.genres || "",
     genreIds_appStore: app.genreIds || "",
     primaryGenre_appStore: app.primaryGenre || "",
     primaryGenreId: app.primaryGenreId || "",
     genre_playStore: app.genre || "",
     genreId_playStore: app.genreId || "",
-    categories: Array.isArray(app.categories)
-      ? app.categories.map((c) => `${c.name}:${c.id}`).join("; ")
-      : app.categories || "",
     contentRating: app.contentRating || "",
     released: app.released || "",
     updated: app.updated || "",
-    price_playStore: isPlayStore ? (app.price ?? "") : "",
-    price_appStore: isAppStore ? (app.price ?? "") : "",
+    price: app.price || "",
     currency: app.currency || "",
     free: app.free != null ? (app.free ? "TRUE" : "FALSE") : "",
     ratings: app.ratings || "",
-    platform,
-    platforms: Array.isArray(app.platforms)
-      ? app.platforms.join("; ")
-      : app.platforms || "",
-    availableOnBothPlatforms: app.availableOnBothPlatforms ? "TRUE" : "FALSE",
-    crossPlatformMethod: app.crossPlatformMethod || "",
-    crossPlatformAppIds: Array.isArray(app.crossPlatformAppIds)
-      ? app.crossPlatformAppIds.join("; ")
-      : app.crossPlatformAppIds || "",
     developer: app.developer || "",
     developerId: app.developerId || "",
     sourceMethod: app.sourceMethod || "",
@@ -240,7 +194,6 @@ export async function exportPlayStoreToJSON(apps, filename, logToFile) {
         developerId: app.developerId,
         genre: app.genre,
         genreId: app.genreId,
-        categories: app.categories,
         previewVideo: app.previewVideo,
         contentRating: app.contentRating,
         adSupported: app.adSupported,
@@ -251,12 +204,7 @@ export async function exportPlayStoreToJSON(apps, filename, logToFile) {
         isAvailableInPlayPass: app.isAvailableInPlayPass,
         editorsChoice: app.editorsChoice,
         appId: app.appId,
-        // Existing cross-platform and source fields
-        platform: app.platform,
-        platforms: app.platforms || [app.platform],
-        availableOnBothPlatforms: app.availableOnBothPlatforms || false,
-        crossPlatformMethod: app.crossPlatformMethod || null,
-        crossPlatformAppIds: app.crossPlatformAppIds || null,
+        // Existing source fields
         sourceMethod: app.sourceMethod,
         sourceCollection: app.sourceCollection || null,
         sourceCountry: app.sourceCountry || null,
@@ -303,7 +251,6 @@ export async function exportPlayStoreToCSV(apps, filename, logToFile) {
       "developerInternalID",
       "genre",
       "genreId",
-      "categories",
       "contentRating",
       "adSupported",
       "released",
@@ -313,12 +260,7 @@ export async function exportPlayStoreToCSV(apps, filename, logToFile) {
       "isAvailableInPlayPass",
       "editorsChoice",
       "appId",
-      // Existing cross-platform and source fields
-      "platform",
-      "platforms",
-      "availableOnBothPlatforms",
-      "crossPlatformMethod",
-      "crossPlatformAppIds",
+      // Existing source fields
       "sourceMethod",
       "sourceCollection",
       "sourceCountry",
@@ -366,9 +308,6 @@ export async function exportPlayStoreToCSV(apps, filename, logToFile) {
         app.developerInternalID || "",
         app.genre || "",
         app.genreId || "",
-        Array.isArray(app.categories)
-          ? app.categories.map((c) => `${c.name}:${c.id}`).join("; ")
-          : app.categories || "",
         app.contentRating || "",
         app.adSupported ? "TRUE" : "FALSE",
         app.released || "",
@@ -378,16 +317,7 @@ export async function exportPlayStoreToCSV(apps, filename, logToFile) {
         app.isAvailableInPlayPass ? "TRUE" : "FALSE",
         app.editorsChoice ? "TRUE" : "FALSE",
         app.appId || "",
-        // Existing cross-platform and source fields
-        app.platform || "",
-        Array.isArray(app.platforms)
-          ? app.platforms.join("; ")
-          : app.platforms || "",
-        app.availableOnBothPlatforms ? "TRUE" : "FALSE",
-        app.crossPlatformMethod || "",
-        Array.isArray(app.crossPlatformAppIds)
-          ? app.crossPlatformAppIds.join("; ")
-          : app.crossPlatformAppIds || "",
+        // Existing source fields
         app.sourceMethod || "",
         app.sourceCollection || "",
         app.sourceCountry || "",
@@ -462,7 +392,6 @@ export async function exportCombinedToJSON(apps, filename, logToFile) {
         developerInternalID: app.developerInternalID || "",
         genre: app.genre || "",
         genreId: app.genreId || "",
-        categories: app.categories || "",
         adSupported: app.adSupported != null ? app.adSupported : "",
         preregister: app.preregister != null ? app.preregister : "",
         earlyAccessEnabled:
@@ -470,12 +399,7 @@ export async function exportCombinedToJSON(apps, filename, logToFile) {
         isAvailableInPlayPass:
           app.isAvailableInPlayPass != null ? app.isAvailableInPlayPass : "",
         editorsChoice: app.editorsChoice != null ? app.editorsChoice : "",
-        // Existing cross-platform and source fields
-        platform: app.platform || "",
-        platforms: app.platforms || [app.platform],
-        availableOnBothPlatforms: app.availableOnBothPlatforms || false,
-        crossPlatformMethod: app.crossPlatformMethod || null,
-        crossPlatformAppIds: app.crossPlatformAppIds || null,
+        // Existing source fields
         sourceMethod: app.sourceMethod || "",
         sourceCollection: app.sourceCollection || "",
         sourceCountry: app.sourceCountry || "",
