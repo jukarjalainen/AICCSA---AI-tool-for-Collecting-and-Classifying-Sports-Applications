@@ -32,9 +32,14 @@ def _parse_args():
 
 def main():
     args = _parse_args()
-    from .build_batch import validate_descriptions, build_batch_input
+    from .build_batch import validate_descriptions, build_batch_input, build_batch_input_from_descriptions
     from .submit_batch import submit_and_wait
     from .merge_results import merge_to_csv
+    from .retry_unclassified import (
+        identify_unclassified,
+        build_retry_descriptions,
+        merge_retry_results,
+    )
     from .scrape_store import run_scrape
 
     try:
@@ -66,6 +71,29 @@ def main():
         print("[batch] merge-results")
         update_stage("merging")
         out_path = merge_to_csv(config.DATA_FILE, output_files)
+        
+        # Identify unclassified rows and retry if necessary
+        print("[batch] identify-unclassified")
+        unclassified = identify_unclassified(out_path)
+        if len(unclassified) > 0:
+            print(f"[batch] retry-unclassified: {len(unclassified)} apps need reclassification")
+            update_stage("retrying")
+            
+            # Build descriptions for unclassified apps
+            build_retry_descriptions(unclassified)
+            retry_desc_file = os.path.join(os.path.dirname(config.DATA_FILE), "openAIBatchClassifier", "out", "descriptions_retry.jsonl")
+            
+            # Validate and build retry batch input
+            retry_input_files = build_batch_input_from_descriptions(retry_desc_file)
+            
+            # Submit retry batch
+            print("[batch] submit-retry")
+            retry_output_files = submit_and_wait(retry_input_files)
+            
+            # Merge retry results
+            print("[batch] merge-retry-results")
+            out_path = merge_retry_results(config.DATA_FILE, out_path, retry_output_files)
+        
         mark_completed(out_path)
         print(f"[batch] completed: {out_path}")
     except Exception as exc:

@@ -39,10 +39,13 @@ const OUTPUT_COLUMNS = [
   "contentRating",
   "released",
   "updated",
-  "is_relevant",
+  "not_relevant",
   "purpose",
-  "stakeholder",
   "sport_type",
+  "athlete",
+  "supporter",
+  "support_staff",
+  "governing_entity",
 ];
 
 const XLSX_SCHEMA_COLUMNS = [
@@ -50,10 +53,13 @@ const XLSX_SCHEMA_COLUMNS = [
   "App_ID",
   "App_Name",
   "url",
-  "Is_relevant",
+  "not_relevant",
   "Purpose",
-  "Stakeholder",
   "Sport_Type",
+  "athlete",
+  "supporter",
+  "support_staff",
+  "governing_entity",
   "searchQuery",
   "Platform",
   "score",
@@ -116,10 +122,13 @@ function buildOutputRow(app) {
     updated: app.updated || "",
 
     // Filled during OpenAIBatchClassifier phase
-    is_relevant: app.is_relevant ?? "",
+    not_relevant: app.not_relevant ?? "",
     purpose: app.purpose ?? "",
-    stakeholder: app.stakeholder ?? "",
     sport_type: app.sport_type ?? "",
+    athlete: app.athlete ?? "",
+    supporter: app.supporter ?? "",
+    support_staff: app.support_staff ?? "",
+    governing_entity: app.governing_entity ?? "",
   };
 }
 
@@ -131,10 +140,13 @@ function buildSchemaXlsxRow(app) {
     App_ID: app.appId || "",
     App_Name: app.title || "",
     url: app.url || "",
-    Is_relevant: app.is_relevant ?? "",
+    not_relevant: app.not_relevant ?? "",
     Purpose: app.purpose ?? "",
-    Stakeholder: app.stakeholder ?? "",
     Sport_Type: app.sport_type ?? "",
+    athlete: app.athlete ?? "",
+    supporter: app.supporter ?? "",
+    support_staff: app.support_staff ?? "",
+    governing_entity: app.governing_entity ?? "",
     searchQuery: app.searchQuery || "",
     Platform: platform,
     score: app.score || "",

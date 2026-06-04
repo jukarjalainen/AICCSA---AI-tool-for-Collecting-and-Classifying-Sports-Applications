@@ -211,23 +211,62 @@ export class GooglePlayScraper {
             try {
               logToFile(`  📋 PLAY STORE Fetching from ${collection}...`);
 
-              const listApps = await gplay.list({
-                category: category,
-                collection: collection,
-                num: 500,
-                country: country,
-                fullDetail: true, // Need full details for genre information
-              });
+              let baseListApps = [];
+              try {
+                const listAppsRaw = await gplay.list({
+                  category: category,
+                  collection: collection,
+                  num: 500,
+                  country: country,
+                  fullDetail: true,
+                });
+                baseListApps = Array.isArray(listAppsRaw) ? listAppsRaw : [];
+              } catch (listFullDetailError) {
+                logToFile(
+                  `    ⚠️ PLAY STORE fullDetail list failed for ${collection}/${category} in ${country.toUpperCase()}: ${listFullDetailError.message}`,
+                );
+                logToFile(
+                  "    🔁 PLAY STORE Falling back to summary list before per-app full detail enrichment...",
+                );
+
+                const listAppsSummary = await gplay.list({
+                  category: category,
+                  collection: collection,
+                  num: 500,
+                  country: country,
+                  fullDetail: false,
+                });
+                baseListApps = Array.isArray(listAppsSummary)
+                  ? listAppsSummary
+                  : [];
+              }
+
+              const listApps = await enrichAppsWithFullDetails(
+                baseListApps,
+                country,
+              );
+
+              logToFile(
+                `    📊 PLAY STORE ${collection}/${category}: ${baseListApps.length} raw, ${listApps.length} enriched`,
+              );
 
               const filteredListApps = listApps.filter((app) => {
-                const { isAllowed, categoryIds } =
+                const { isAllowed, categoryIds, hasGameCategory } =
                   isAllowedNonGameCategory(app);
-                if (!isAllowed) {
+                const allowFallbackUnknown =
+                  !isAllowed &&
+                  !hasGameCategory &&
+                  categoryIds.length === 0 &&
+                  app?._detailFetchFailed &&
+                  !isLikelyGameApp(app);
+                const shouldKeep = isAllowed || allowFallbackUnknown;
+
+                if (!shouldKeep) {
                   logToFile(
                     `    🚫 PLAY STORE Filtered out from ${collection}: "${app.title}" (Categories: ${categoryIds.join("|") || "UNKNOWN"})`,
                   );
                 }
-                return isAllowed;
+                return shouldKeep;
               });
 
               let newAppsCount = 0;
