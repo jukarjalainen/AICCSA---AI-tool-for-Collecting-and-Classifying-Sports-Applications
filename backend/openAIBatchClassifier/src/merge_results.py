@@ -82,6 +82,12 @@ def merge_to_csv(input_file: str, output_files: list[str]):
     schema_cols = list(base.columns)
     preds = parse_batch_output(output_files)
 
+    if preds.empty:
+        raise RuntimeError(
+            "OpenAI batch returned no usable classification records. "
+            "Check the raw batch output files and the prompt schema before retrying."
+        )
+
     id_col = _resolve_column(base, ["id", "appId", "app_id", "App_ID"])
     platform_col = _resolve_column(
         base,

@@ -22,7 +22,7 @@ BATCH_STATUS_FILE = os.path.join(BACKEND_ROOT, "batch_status.json")
 MODEL = "gpt-5-mini"
 TEMPERATURE = 0
 COMPLETION_WINDOW = "24h"   # Batch API cost tier
-CHUNK_SIZE = 200            # apps per request (prompt sent once per chunk)
+CHUNK_SIZE = 50             # apps per request (prompt sent once per chunk)
 MAX_REQUESTS_PER_FILE = 130
 
 # ---------- Input columns ----------
