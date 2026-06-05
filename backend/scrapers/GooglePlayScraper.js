@@ -20,12 +20,40 @@ export class GooglePlayScraper {
       const targetCountries = this.countries;
       const { logToFile } = this;
 
+      const normalizeCategoryId = (value) => {
+        if (!value) {
+          return "";
+        }
+
+        const raw = String(value).trim().toUpperCase();
+        const collapsed = raw.replace(/&/g, "AND").replace(/\s+/g, "_");
+
+        if (
+          collapsed === "HEALTH_AND_FITNESS" ||
+          collapsed === "HEALTH_FITNESS" ||
+          collapsed === "HEALTHANDFITNESS"
+        ) {
+          return "HEALTH_AND_FITNESS";
+        }
+
+        if (collapsed === "SPORTS" || collapsed === "SPORT") {
+          return "SPORTS";
+        }
+
+        return collapsed;
+      };
+
       const getCategoryIds = (app) => {
         const ids = new Set();
 
-        const directGenreIds = [app?.genreId, app?.genreID, app?.appCategory]
+        const directGenreIds = [
+          app?.genreId,
+          app?.genreID,
+          app?.genre,
+          app?.appCategory,
+        ]
           .filter(Boolean)
-          .map((v) => String(v).trim().toUpperCase());
+          .map((v) => normalizeCategoryId(v));
         directGenreIds.forEach((id) => ids.add(id));
 
         if (Array.isArray(app?.categories)) {
@@ -35,12 +63,99 @@ export class GooglePlayScraper {
                 ? cat
                 : cat?.id || cat?.genreId || cat?.genreID || cat?.name;
             if (candidate) {
-              ids.add(String(candidate).trim().toUpperCase());
+              ids.add(normalizeCategoryId(candidate));
             }
           });
         }
 
         return [...ids];
+      };
+
+      const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+      const hasUsableGenre = (app) => getCategoryIds(app).length > 0;
+
+      const isLikelyGameApp = (app) => {
+        const text =
+          `${app?.title || ""} ${app?.summary || ""} ${app?.description || ""}`.toLowerCase();
+        const hints = [
+          " game",
+          "clash",
+          "battle",
+          "simulator",
+          "arcade",
+          "puzzle",
+          "idle",
+          "rpg",
+          "shooter",
+        ];
+        return hints.some((hint) => text.includes(hint));
+      };
+
+      const fetchFullDetailForApp = async (appId, country) => {
+        const argVariants = [
+          { appId, country, lang: "en" },
+          { appId, country },
+          { appId },
+        ];
+
+        for (const args of argVariants) {
+          for (let attempt = 1; attempt <= 2; attempt++) {
+            try {
+              const fullApp = await gplay.app(args);
+              if (fullApp && hasUsableGenre(fullApp)) {
+                return fullApp;
+              }
+            } catch {
+              // Try next attempt/variant.
+            }
+            await sleep(100);
+          }
+        }
+
+        return null;
+      };
+
+      const enrichAppsWithFullDetails = async (apps, country) => {
+        const enriched = [];
+        const batchSize = 8;
+
+        for (let i = 0; i < apps.length; i += batchSize) {
+          const chunk = apps.slice(i, i + batchSize);
+          const results = await Promise.all(
+            chunk.map(async (app) => {
+              if (!app?.appId) {
+                return null;
+              }
+
+              if (hasUsableGenre(app)) {
+                return app;
+              }
+
+              const detailed = await fetchFullDetailForApp(app.appId, country);
+              if (!detailed) {
+                logToFile(
+                  `      ⚠️ PLAY STORE Detail fetch failed for ${app.appId}: unable to obtain full detail with genre`,
+                );
+                return {
+                  ...app,
+                  _detailFetchFailed: true,
+                };
+              }
+              return detailed;
+            }),
+          );
+
+          results.forEach((item) => {
+            if (item) {
+              enriched.push(item);
+            }
+          });
+
+          await sleep(150);
+        }
+
+        return enriched;
       };
 
       const isAllowedNonGameCategory = (app) => {
@@ -96,23 +211,62 @@ export class GooglePlayScraper {
             try {
               logToFile(`  📋 PLAY STORE Fetching from ${collection}...`);
 
-              const listApps = await gplay.list({
-                category: category,
-                collection: collection,
-                num: 500,
-                country: country,
-                fullDetail: true, // Need full details for genre information
-              });
+              let baseListApps = [];
+              try {
+                const listAppsRaw = await gplay.list({
+                  category: category,
+                  collection: collection,
+                  num: 500,
+                  country: country,
+                  fullDetail: true,
+                });
+                baseListApps = Array.isArray(listAppsRaw) ? listAppsRaw : [];
+              } catch (listFullDetailError) {
+                logToFile(
+                  `    ⚠️ PLAY STORE fullDetail list failed for ${collection}/${category} in ${country.toUpperCase()}: ${listFullDetailError.message}`,
+                );
+                logToFile(
+                  "    🔁 PLAY STORE Falling back to summary list before per-app full detail enrichment...",
+                );
+
+                const listAppsSummary = await gplay.list({
+                  category: category,
+                  collection: collection,
+                  num: 500,
+                  country: country,
+                  fullDetail: false,
+                });
+                baseListApps = Array.isArray(listAppsSummary)
+                  ? listAppsSummary
+                  : [];
+              }
+
+              const listApps = await enrichAppsWithFullDetails(
+                baseListApps,
+                country,
+              );
+
+              logToFile(
+                `    📊 PLAY STORE ${collection}/${category}: ${baseListApps.length} raw, ${listApps.length} enriched`,
+              );
 
               const filteredListApps = listApps.filter((app) => {
-                const { isAllowed, categoryIds } =
+                const { isAllowed, categoryIds, hasGameCategory } =
                   isAllowedNonGameCategory(app);
-                if (!isAllowed) {
+                const allowFallbackUnknown =
+                  !isAllowed &&
+                  !hasGameCategory &&
+                  categoryIds.length === 0 &&
+                  app?._detailFetchFailed &&
+                  !isLikelyGameApp(app);
+                const shouldKeep = isAllowed || allowFallbackUnknown;
+
+                if (!shouldKeep) {
                   logToFile(
                     `    🚫 PLAY STORE Filtered out from ${collection}: "${app.title}" (Categories: ${categoryIds.join("|") || "UNKNOWN"})`,
                   );
                 }
-                return isAllowed;
+                return shouldKeep;
               });
 
               let newAppsCount = 0;
@@ -161,21 +315,24 @@ export class GooglePlayScraper {
             logToFile(
               `PLAYSTORE    Searching: "${query}" in ${country.toUpperCase()}`,
             );
-            let searchApps = [];
+            let baseSearchApps = [];
+
             try {
               const searchAppsRaw = await gplay.search({
                 term: query,
                 num: 250, // max is 250
                 country: country,
-                fullDetail: true, // Need full details for genre information
+                fullDetail: true,
               });
-              searchApps = Array.isArray(searchAppsRaw) ? searchAppsRaw : [];
+              baseSearchApps = Array.isArray(searchAppsRaw)
+                ? searchAppsRaw
+                : [];
             } catch (searchFullDetailError) {
               logToFile(
                 `      ⚠️ PLAY STORE fullDetail search failed for "${query}" in ${country.toUpperCase()}: ${searchFullDetailError.message}`,
               );
               logToFile(
-                `      🔁 PLAY STORE Falling back to summary search + per-app detail fetch...`,
+                "      🔁 PLAY STORE Falling back to summary search before per-app full detail enrichment...",
               );
 
               const summaryResults = await gplay.search({
@@ -184,36 +341,22 @@ export class GooglePlayScraper {
                 country: country,
                 fullDetail: false,
               });
-
-              const summaryApps = Array.isArray(summaryResults)
+              baseSearchApps = Array.isArray(summaryResults)
                 ? summaryResults
                 : [];
-              const enrichedApps = [];
-
-              for (const summaryApp of summaryApps) {
-                if (!summaryApp.appId) {
-                  continue;
-                }
-                try {
-                  const fullApp = await gplay.app({
-                    appId: summaryApp.appId,
-                    country,
-                    lang: "en",
-                  });
-                  enrichedApps.push(fullApp);
-                } catch (detailError) {
-                  logToFile(
-                    `      ⚠️ PLAY STORE Detail fetch failed for ${summaryApp.appId}: ${detailError.message}`,
-                  );
-                  enrichedApps.push(summaryApp);
-                }
-              }
-              searchApps = enrichedApps;
             }
+
+            const searchApps = await enrichAppsWithFullDetails(
+              baseSearchApps,
+              country,
+            );
 
             // Log total results found
             logToFile(
-              `      📊 PLAY STORE Found ${searchApps.length} total results for "${query}"`,
+              `      📊 PLAY STORE Found ${baseSearchApps.length} raw results for "${query}"`,
+            );
+            logToFile(
+              `      🧩 PLAY STORE Enriched ${searchApps.length} results with full detail`,
             );
 
             // Log genre distribution for debugging
@@ -241,22 +384,34 @@ export class GooglePlayScraper {
               );
             }
 
-            // Filter search results to only include SPORTS or HEALTH_AND_FITNESS category apps
+            // Filter search results to only include SPORTS or HEALTH_AND_FITNESS category apps.
+            // At this point, apps should have full detail (genre/category metadata).
             const filteredSearchApps = searchApps.filter((app) => {
-              const { isAllowed, categoryIds } = isAllowedNonGameCategory(app);
+              const { isAllowed, categoryIds, hasGameCategory } =
+                isAllowedNonGameCategory(app);
+              const allowFallbackUnknown =
+                !isAllowed &&
+                !hasGameCategory &&
+                categoryIds.length === 0 &&
+                app?._detailFetchFailed &&
+                !isLikelyGameApp(app);
+              const shouldKeep = isAllowed || allowFallbackUnknown;
 
               // Log filtered apps for debugging
-              if (!isAllowed) {
+              if (!shouldKeep) {
                 logToFile(
                   `      🚫 PLAY STORE Filtered out (wrong genre): "${app.title}" (Categories: ${categoryIds.join("|") || "UNKNOWN"})`,
                 );
               } else {
+                const reason = isAllowed
+                  ? "category"
+                  : "fallback-after-detail-fail";
                 logToFile(
-                  `      ✅ PLAY STORE Keeping: "${app.title}" (Categories: ${categoryIds.join("|")})`,
+                  `      ✅ PLAY STORE Keeping (${reason}): "${app.title}" (Categories: ${categoryIds.join("|") || "UNKNOWN"})`,
                 );
               }
 
-              return isAllowed;
+              return shouldKeep;
             });
 
             const filteredOutCount =

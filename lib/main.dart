@@ -71,8 +71,13 @@ class _HomePageState extends State<HomePage> {
       return;
     }
 
-    if (!config.useEssentialQueries && config.keywords.isEmpty) {
-      _showErrorSnackBar('Please enter keywords or select a file');
+    final hasKeywords = config.keywords.trim().isNotEmpty;
+    final canRunWithoutKeywords =
+        config.useEssentialQueries || config.searchTopCollections;
+    if (!hasKeywords && !canRunWithoutKeywords) {
+      _showErrorSnackBar(
+        'Please enter keywords, enable essential keywords, or enable search top collections',
+      );
       return;
     }
 

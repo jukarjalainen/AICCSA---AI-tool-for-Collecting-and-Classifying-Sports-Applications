@@ -1,6 +1,6 @@
 /**
  * Entrypoint orchestrator for the full scraping pipeline.
- * Runs both store scrapers, merges/deduplicates results, exports files, and writes logs.
+ * Runs both store scrapers, combines results, exports files, and writes logs.
  */
 import fs from "fs/promises";
 import path from "path";
@@ -9,7 +9,7 @@ import { countriesEssential } from "./lists/countries_essential.js";
 import { searchQueriesEssential } from "./lists/searchQueries_essential.js";
 import { AppStoreScraper } from "./scrapers/AppStoreScraper.js";
 import { GooglePlayScraper } from "./scrapers/GooglePlayScraper.js";
-import { combineAndDeduplicateApps } from "./modules/merger.js";
+import { combineApps } from "./modules/merger.js";
 import { printCombinedSummary } from "./modules/summary.js";
 import {
   exportCombinedToCSV,
@@ -283,12 +283,8 @@ async function main() {
       return;
     }
 
-    // Combine and deduplicate
-    const combinedApps = combineAndDeduplicateApps(
-      appStoreApps,
-      googlePlayApps,
-      logToFile,
-    );
+    // Combine results from both platforms
+    const combinedApps = combineApps(appStoreApps, googlePlayApps, logToFile);
 
     if (combinedApps.length > 0) {
       printCombinedSummary(combinedApps, logToFile);

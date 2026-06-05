@@ -52,7 +52,7 @@ test(
       "developerInternalID",
       "genre",
       "genreId",
-      "categories",
+
       "previewVideo",
       "contentRating",
       "adSupported",

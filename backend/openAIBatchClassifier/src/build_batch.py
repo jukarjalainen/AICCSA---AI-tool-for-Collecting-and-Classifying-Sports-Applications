@@ -75,6 +75,66 @@ def build_batch_input():
 
     return files_written
 
+
+def build_batch_input_from_descriptions(descriptions_file: str, suffix: str = "retry"):
+    """Build batch input from a custom descriptions JSONL file (for retries or custom batches)."""
+    import os
+    ensure_dir(config.OUT_DIR)
+    prompt = load_prompt_text()
+    records = list(read_jsonl(descriptions_file))
+    
+    if not records:
+        print(f"No records in {descriptions_file}")
+        return []
+    
+    requests = list(chunks(records, config.CHUNK_SIZE))
+    files_written = []
+    global_chunk_idx = 1
+
+    for file_idx, req_group in enumerate(
+        chunks(requests, config.MAX_REQUESTS_PER_FILE),
+        start=1,
+    ):
+        out_path = f"{config.BATCH_INPUT_JSONL}{suffix}_{file_idx}"
+        with open(out_path, "w", encoding="utf-8") as f:
+            for group in req_group:
+                payload = [
+                    {
+                        "id": r["id"],
+                        "platform": r["platform"],
+                        "description": r.get("description", ""),
+                    }
+                    for r in group
+                ]
+                custom_id = f"chunk_{suffix}_{global_chunk_idx:05d}"
+                body = {
+                    "model": config.MODEL,
+                    "messages": [
+                        {"role": "system", "content": prompt},
+                        {
+                            "role": "user",
+                            "content": json.dumps(payload, ensure_ascii=False),
+                        },
+                    ],
+                }
+
+                if _supports_explicit_temperature(config.MODEL):
+                    body["temperature"] = config.TEMPERATURE
+
+                line = {
+                    "custom_id": custom_id,
+                    "method": "POST",
+                    "url": "/v1/chat/completions",
+                    "body": body,
+                }
+                f.write(json.dumps(line, ensure_ascii=False) + "\n")
+                global_chunk_idx += 1
+
+        files_written.append(out_path)
+        print(f"Wrote Batch input: {out_path}")
+
+    return files_written
+
 if __name__ == "__main__":
     validate_descriptions(strict=True)
     build_batch_input()

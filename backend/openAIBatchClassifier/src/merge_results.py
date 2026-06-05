@@ -68,16 +68,25 @@ def _canonical_platform(value: str):
 
 def _resolve_classification_columns(df: pd.DataFrame):
     return {
-        "is_relevant": _resolve_column(df, ["is_relevant", "Is_relevant"]),
+        "not_relevant": _resolve_column(df, ["not_relevant", "Not_relevant"]),
         "purpose": _resolve_column(df, ["purpose", "Purpose"]),
-        "stakeholder": _resolve_column(df, ["stakeholder", "Stakeholder"]),
         "sport_type": _resolve_column(df, ["sport_type", "Sport_Type"]),
+        "athlete": _resolve_column(df, ["athlete", "Athlete"]),
+        "supporter": _resolve_column(df, ["supporter", "Supporter"]),
+        "support_staff": _resolve_column(df, ["support_staff", "Support_Staff"]),
+        "governing_entity": _resolve_column(df, ["governing_entity", "Governing_Entity"]),
     }
 
 def merge_to_csv(input_file: str, output_files: list[str]):
     base = _load_table(input_file)
     schema_cols = list(base.columns)
     preds = parse_batch_output(output_files)
+
+    if preds.empty:
+        raise RuntimeError(
+            "OpenAI batch returned no usable classification records. "
+            "Check the raw batch output files and the prompt schema before retrying."
+        )
 
     id_col = _resolve_column(base, ["id", "appId", "app_id", "App_ID"])
     platform_col = _resolve_column(
@@ -113,32 +122,32 @@ def merge_to_csv(input_file: str, output_files: list[str]):
         if c in preds.columns:
             preds[c] = preds[c].fillna(False).astype(bool)
 
-    stakeholder_parts = []
-    for key in ("athlete", "support_staff", "supporter", "governing_entity"):
-        if key in preds.columns:
-            stakeholder_parts.append(
-                preds.apply(lambda r: key if bool(r.get(key, False)) else "", axis=1)
-            )
+    for group_col in ("athlete", "support_staff", "supporter", "governing_entity"):
+        if group_col in preds.columns:
+            preds[group_col] = preds[group_col].map(lambda v: "TRUE" if bool(v) else "FALSE")
+        else:
+            preds[group_col] = ""
 
-    if stakeholder_parts:
-        preds["stakeholder"] = (
-            pd.concat(stakeholder_parts, axis=1)
-            .apply(lambda row: "|".join([v for v in row.tolist() if v]), axis=1)
-        )
-    else:
-        preds["stakeholder"] = ""
-
+    # Keep not_relevant as-is (don't convert to is_relevant)
     if "not_relevant" in preds.columns:
-        preds["is_relevant"] = (~preds["not_relevant"]).map(lambda v: "TRUE" if v else "FALSE")
+        preds["not_relevant"] = preds["not_relevant"].map(lambda v: "TRUE" if bool(v) else "FALSE")
     else:
-        preds["is_relevant"] = ""
+        preds["not_relevant"] = ""
 
     if "sport_type" not in preds.columns:
         preds["sport_type"] = ""
     if "purpose" not in preds.columns:
         preds["purpose"] = ""
 
-    target_cols = ["is_relevant", "purpose", "stakeholder", "sport_type"]
+    target_cols = [
+        "not_relevant",
+        "purpose",
+        "sport_type",
+        "athlete",
+        "supporter",
+        "support_staff",
+        "governing_entity",
+    ]
     schema_target_cols = _resolve_classification_columns(base_work)
 
     keep = [c for c in ["id", "platform", *target_cols] if c in preds.columns]
@@ -170,6 +179,21 @@ def merge_to_csv(input_file: str, output_files: list[str]):
 
     merged = merged.drop(columns=["__merge_id", "__merge_platform"], errors="ignore")
     merged = merged[schema_cols]
+
+    # ---- Apply not_relevant logic: if not_relevant=TRUE, all classification fields should be "UNKNOWN" ----
+    not_relevant_col = schema_target_cols.get("not_relevant")
+    if not_relevant_col and not_relevant_col in merged.columns:
+        classification_cols = [
+            schema_target_cols.get(c) for c in ["purpose", "sport_type", "athlete", "supporter", "support_staff", "governing_entity"]
+            if schema_target_cols.get(c) and schema_target_cols.get(c) in merged.columns
+        ]
+        # If not_relevant = TRUE, set all classification fields to "UNKNOWN"
+        not_relevant_mask = (merged[not_relevant_col].fillna("").astype(str).str.strip().str.upper() == "TRUE")
+        for col in classification_cols:
+            merged.loc[not_relevant_mask, col] = "UNKNOWN"
+            # Also set empty/NaN values to "UNKNOWN" for relevant apps
+            merged.loc[~not_relevant_mask, col] = merged.loc[~not_relevant_mask, col].fillna("UNKNOWN").astype(str).str.strip()
+            merged.loc[(~not_relevant_mask) & (merged[col] == ""), col] = "UNKNOWN"
 
     # ---- timestamped output name: YYYY-DD-MM_HHMM ----
     ts = datetime.now().strftime("%Y-%d-%m_%H%M")  # year-day-month_hourminute

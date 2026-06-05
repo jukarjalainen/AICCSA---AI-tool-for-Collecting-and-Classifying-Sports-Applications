@@ -127,7 +127,7 @@ class _ConfigurationFormState extends State<ConfigurationForm> {
                       enabled: !appState.configuration.useEssentialQueries,
                       decoration: InputDecoration(
                         hintText:
-                            'Enter keywords (comma-separated) or select a file',
+                            'Enter keywords (comma-separated) or select a file. Leave empty to scrape top collections only.' ,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
@@ -160,7 +160,7 @@ class _ConfigurationFormState extends State<ConfigurationForm> {
               CheckboxListTile(
                 contentPadding: EdgeInsets.zero,
                 dense: true,
-                title: const Text('Use essential keyword list'),
+                title: const Text('Use essential keyword list '),
                 value: appState.configuration.useEssentialQueries,
                 onChanged: (value) {
                   appState.setUseEssentialQueries(value ?? false);
@@ -274,7 +274,7 @@ class _ConfigurationFormState extends State<ConfigurationForm> {
                 contentPadding: EdgeInsets.zero,
                 title: const Text('Search top collections'),
                 subtitle: const Text(
-                  'Search all top collections (without a search term) in SPORTS and HEALTH_AND_FITNESS for selected stores only.',
+                  'Search all top collections (without a search term) in SPORTS and HEALTH_AND_FITNESS for selected store.',
                 ),
                 value: appState.configuration.searchTopCollections,
                 onChanged: (value) {
@@ -285,7 +285,7 @@ class _ConfigurationFormState extends State<ConfigurationForm> {
                 contentPadding: EdgeInsets.zero,
                 title: const Text('Run scraping only (skip AI classification)'),
                 subtitle: const Text(
-                  'Export scraped app data to CSV/XLSX and do not run OpenAIBatchClassifier.',
+                  'Export scraped app data to CSV/XLSX and do not run OpenAIBatchClassifier. API key is not required when this option is enabled.',
                 ),
                 value: appState.configuration.scrapeOnly,
                 onChanged: (value) {
@@ -316,14 +316,14 @@ class _ConfigurationFormState extends State<ConfigurationForm> {
                     value: 'gpt-5-mini',
                     child: Text('GPT-5 Mini'),
                   ),
-                  DropdownMenuItem(value: 'gpt-4', child: Text('GPT-4')),
+                  DropdownMenuItem(value: 'gpt-4.1-mini', child: Text('GPT-4.1 Mini')),
                   DropdownMenuItem(
-                    value: 'gpt-4-turbo',
-                    child: Text('GPT-4 Turbo'),
+                    value: 'gpt-4.1-mini',
+                    child: Text('gpt-4.1-mini'),
                   ),
                   DropdownMenuItem(
-                    value: 'gpt-3.5-turbo',
-                    child: Text('GPT-3.5 Turbo'),
+                    value: 'gpt-5.2',
+                    child: Text('gpt-5.2'),
                   ),
                 ],
                 onChanged: (value) {
@@ -406,7 +406,7 @@ class _ConfigurationFormState extends State<ConfigurationForm> {
                       '• Scrapes app data from selected stores\n'
                       '• Processes data through OpenAI Batch API\n'
                       '• Classifies apps into user groups, sports types, and purposes\n'
-                      '• Generates final classified CSV export',
+                      '• Generates final classified CSV/xlsx export',
                       style: TextStyle(fontSize: 12),
                     ),
                   ],

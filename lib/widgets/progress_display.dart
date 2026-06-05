@@ -1,10 +1,37 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/app_configuration.dart';
 import '../providers/app_state_provider.dart';
 
-class ProgressDisplay extends StatelessWidget {
+class ProgressDisplay extends StatefulWidget {
   const ProgressDisplay({Key? key}) : super(key: key);
+
+  @override
+  State<ProgressDisplay> createState() => _ProgressDisplayState();
+}
+
+class _ProgressDisplayState extends State<ProgressDisplay> {
+  Timer? _clockTimer;
+  DateTime _now = DateTime.now();
+
+  @override
+  void initState() {
+    super.initState();
+    _clockTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!mounted) return;
+      setState(() {
+        _now = DateTime.now();
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _clockTimer?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -43,6 +70,11 @@ class ProgressDisplay extends StatelessWidget {
                   '${(progress.progress * 100).toStringAsFixed(1)}%',
                   style: const TextStyle(fontSize: 12, color: Colors.grey),
                 ),
+                const SizedBox(height: 24),
+              ],
+
+              if (progress.isProcessing && progress.stage == 'scraping') ...[
+                _buildScrapingEta(progress, _now),
                 const SizedBox(height: 24),
               ],
 
@@ -126,6 +158,13 @@ class ProgressDisplay extends StatelessWidget {
                   progress.message,
                   style: const TextStyle(fontSize: 14, color: Colors.grey),
                 ),
+                if (progress.stage == 'polling') ...[
+                  const SizedBox(height: 6),
+                  const Text(
+                    'Polling means checking OpenAI batch status every 5 seconds until results are ready.',
+                    style: TextStyle(fontSize: 12, color: Colors.grey),
+                  ),
+                ],
               ],
             ),
           ),
@@ -153,7 +192,7 @@ class ProgressDisplay extends StatelessWidget {
       'Scraping',
       'Chunking Data',
       'Uploading to API',
-      'Polling for Results',
+      'Polling Batch Status',
       'Merging Data',
       'Completed',
     ];
@@ -334,12 +373,94 @@ class ProgressDisplay extends StatelessWidget {
     );
   }
 
+  Widget _buildScrapingEta(ProcessProgress progress, DateTime now) {
+    final startTime = progress.startTime;
+    if (startTime == null) {
+      return const SizedBox.shrink();
+    }
+
+    final elapsed = now.difference(startTime);
+    final remaining = _estimateScrapingRemaining(progress, elapsed);
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.amber.shade50,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.amber.shade200),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Scraping Time Estimate',
+            style: TextStyle(fontWeight: FontWeight.w600),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Elapsed: ${_formatDuration(elapsed)}',
+            style: const TextStyle(fontSize: 12),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            remaining == null
+                ? 'Estimating remaining time...'
+                : 'Estimated remaining: ${_formatDuration(remaining)}',
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            'Estimate is based on current progress speed and may vary by API/network response times.',
+            style: TextStyle(fontSize: 11, color: Colors.grey),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Duration? _estimateScrapingRemaining(
+    ProcessProgress progress,
+    Duration elapsed,
+  ) {
+    const scrapingTargetProgress = 0.45;
+    final currentProgress = progress.progress.clamp(0.0, 1.0);
+    final elapsedSeconds = elapsed.inSeconds;
+
+    if (elapsedSeconds < 5 || currentProgress <= 0.01) {
+      return null;
+    }
+
+    if (currentProgress >= scrapingTargetProgress) {
+      return Duration.zero;
+    }
+
+    final progressPerSecond = currentProgress / elapsedSeconds;
+    if (progressPerSecond <= 0) {
+      return null;
+    }
+
+    final estimatedTotalScrapingSeconds =
+        scrapingTargetProgress / progressPerSecond;
+    final remainingSeconds = (estimatedTotalScrapingSeconds - elapsedSeconds)
+        .ceil();
+
+    if (remainingSeconds <= 0) {
+      return Duration.zero;
+    }
+
+    if (remainingSeconds > 6 * 60 * 60) {
+      return null;
+    }
+
+    return Duration(seconds: remainingSeconds);
+  }
+
   String _getStageLabel(String stage) {
     const labels = {
       'scraping': 'Scraping App Store',
       'chunking': 'Processing Data',
       'uploading': 'Uploading to OpenAI',
-      'polling': 'Waiting for Classification',
+      'polling': 'Polling OpenAI Batch Status',
       'merging': 'Merging Results',
     };
     return labels[stage] ?? 'Processing';
