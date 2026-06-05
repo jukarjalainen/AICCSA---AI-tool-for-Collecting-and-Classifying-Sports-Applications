@@ -5,6 +5,8 @@ Core Functionality:
 
 Scrape sports and fitness application data from Google Play Store and Apple App Store based on keywords (single or .txt list) and predefined/custom country codes.
 
+Scrape applications from top lists (e.g., Top Free, Top Paid) for both stores.
+
 Combine and clean the scraped app data into a single CSV.
 
 Automatically chunk the data and send it to the OpenAI Batch API for categorization (User Groups, Sport type, Purpose).
