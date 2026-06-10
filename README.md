@@ -1,6 +1,8 @@
 # AICCSA - AI-tool for Collecting and Classifying Sports Applications
 AICCSA is a Flutter-based desktop application designed specifically for research purposes. It automates the collection of sports and health/fitness application data from the Google Play Store and Apple App Store, and utilizes OpenAI's API to intelligently classify the gathered data.
 
+*** THE SEARCH FUNCTION FOR THE GOOGLE PLAY SCRAPER IS TEMPORARILY UNAVAILABLE. WE ARE CURRENTLY INVESTIGATING THE ISSUE.***
+
 The tool categorizes each application into specific taxonomies, including:
 - User groups (athlete, supporter, support staff, governing entity).
 - Purpose of use (tracking, live scores, betting, training, team management etc.)
