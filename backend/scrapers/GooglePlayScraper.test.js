@@ -1,15 +1,18 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import gplay from "google-play-scraper";
 import { GooglePlayScraper } from "./GooglePlayScraper.js";
 
 test(
   "GooglePlayScraper returns expected Google Play fields for 'padel' search in one country",
   { timeout: 180000 },
   async () => {
-    const originalSearch = gplay.search;
-
-    gplay.search = async ({ term, country }) => {
+    const gplayStub = {
+      collection: {
+        GROSSING: "GROSSING",
+        TOP_FREE: "TOP_FREE",
+        TOP_PAID: "TOP_PAID",
+      },
+      search: async ({ term, country }) => {
       assert.equal(term, "padel");
       assert.equal(country, "es");
 
@@ -37,6 +40,7 @@ test(
           developerInternalID: "dev123",
           genre: "Sports",
           genreId: "SPORTS",
+          previewVideo: "",
           contentRating: "Everyone",
           adSupported: false,
           released: "2023-01-01",
@@ -49,6 +53,7 @@ test(
           appId: "com.padel.pro",
         },
       ];
+      },
     };
 
     const scraper = new GooglePlayScraper({
@@ -56,14 +61,10 @@ test(
       searchQueries: ["padel"],
       logToFile: () => {},
       includeTopCollections: false,
+      googlePlayClient: gplayStub,
     });
 
-    let apps = [];
-    try {
-      apps = await scraper.scrape();
-    } finally {
-      gplay.search = originalSearch;
-    }
+    const apps = await scraper.scrape();
 
     assert.ok(Array.isArray(apps), "scrape() should return an array");
     assert.ok(

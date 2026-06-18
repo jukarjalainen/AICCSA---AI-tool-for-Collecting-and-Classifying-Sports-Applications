@@ -2,18 +2,35 @@
  * Google Play scraper class.
  * Collects sports and health/fitness apps from top lists and search terms per country.
  */
-import gplay from "google-play-scraper";
+let googlePlayClientPromise;
+
+async function loadGooglePlayClient() {
+  if (!googlePlayClientPromise) {
+    googlePlayClientPromise = import("google-play-scraper").then(
+      (module) => module.default ?? module,
+    );
+  }
+  return googlePlayClientPromise;
+}
 
 export class GooglePlayScraper {
-  constructor({ countries, searchQueries, logToFile, includeTopCollections }) {
+  constructor({
+    countries,
+    searchQueries,
+    logToFile,
+    includeTopCollections,
+    googlePlayClient,
+  }) {
     this.countries = countries;
     this.searchQueries = searchQueries;
     this.logToFile = logToFile;
     this.includeTopCollections = includeTopCollections;
+    this.googlePlayClient = googlePlayClient;
   }
 
   async scrape() {
     try {
+      const gplay = this.googlePlayClient || (await loadGooglePlayClient());
       let allApps = [];
       const targetCategories = ["SPORTS", "HEALTH_AND_FITNESS"];
       const allowedCategoryIds = new Set(targetCategories);
